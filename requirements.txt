@@ -1,5 +1,5 @@
-fastapi>=0.118
+fastapi
 uvicorn[standard]>=0.34
 pymongo>=4.15
-pydantic>=2.12
-python-dotenv>=1.0
+pydantic[email]>=2.12
+python-dotenv
