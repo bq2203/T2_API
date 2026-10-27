@@ -1,7 +1,6 @@
 # Entornos virtuales
 venv/
 .venv/
-env/
 
 # Variables de entorno (contienen contraseñas, NO se suben)
 .env
