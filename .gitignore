@@ -1,0 +1,11 @@
+# Entornos virtuales
+venv/
+.venv/
+
+# Variables de entorno (contienen contraseñas, NO se suben)
+.env
+
+# Python
+__pycache__/
+*.pyc
+__init__
