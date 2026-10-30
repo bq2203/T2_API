@@ -1,0 +1,46 @@
+{% extends "tienda/base.html" %}
+{% load static %}
+{% block titulo %}Dashboard · TechGear{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'tienda/css/dashboard.css' %}">{% endblock %}
+{% block contenido %}
+<div class="dash__cabecera">
+  <div>
+    <h1>Dashboard de productos</h1>
+    <p class="dash__sub">{{ productos|length }} producto{{ productos|length|pluralize }} en el catálogo</p>
+  </div>
+  <a href="{% url 'producto_crear' %}" class="btn">+ Nuevo producto</a>
+</div>
+
+{% if productos %}
+  <div class="tabla-caja">
+    <table class="tabla">
+      <thead>
+        <tr><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for p in productos %}
+        <tr>
+          <td data-label="Nombre">{% if p.imagen %}<img src="{{ p.imagen }}" alt="" class="miniatura">{% endif %}<strong>{{ p.nombre }}</strong><br><small>{{ p.descripcion|truncatechars:60 }}</small></td>
+          <td data-label="Categoría"><span class="etiqueta">{{ p.categoria }}</span></td>
+          <td data-label="Precio">${{ p.precio|floatformat:2 }}</td>
+          <td data-label="Stock">
+            {% if p.stock > 0 %}<span class="stock stock--ok">{{ p.stock }}</span>
+            {% else %}<span class="stock stock--no">Agotado</span>{% endif %}
+          </td>
+          <td data-label="Acciones" class="acciones">
+            <a href="{% url 'producto_editar' p.id %}" class="btn btn--chico btn--borde">Editar</a>
+            <form method="post" action="{% url 'producto_eliminar' p.id %}" class="en-linea"
+                  onsubmit="return confirm('¿Eliminar &quot;{{ p.nombre|escapejs }}&quot;? Esta acción no se puede deshacer.');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn--chico btn--peligro">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <p class="vacio">Aún no hay productos. Crea el primero con “Nuevo producto”.</p>
+{% endif %}
+{% endblock %}

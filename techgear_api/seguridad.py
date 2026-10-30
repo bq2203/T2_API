@@ -10,10 +10,19 @@ from pathlib import Path
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
-
+# Defínelo en techgear_api/.env:  JWT_SECRET=una-cadena-larga-y-aleatoria
 JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-cambiar-en-.env")
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRA_MINUTOS = int(os.getenv("JWT_EXPIRA_MINUTOS", "60"))
+
+# Emails que serán administradores. En .env:  ADMIN_EMAILS=admin@correo.com,otro@correo.com
+ADMIN_EMAILS = {
+    e.strip().lower() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()
+}
+
+
+def es_email_admin(email: str) -> bool:
+    return email.lower() in ADMIN_EMAILS
 
 
 def hashear_password(password: str) -> str:

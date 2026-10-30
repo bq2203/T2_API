@@ -12,6 +12,13 @@ class ProductoBase(BaseModel):
     categoria: str
     precio: float = Field(..., gt=0)
     stock: int = Field(..., ge=0)
+    imagen: str = ""                      
+
+
+class ProductoUpdate(BaseModel):
+    ...
+    stock: Optional[int] = Field(None, ge=0)
+    imagen: Optional[str] = None           
 
 
 class ProductoCreate(ProductoBase):
@@ -71,6 +78,7 @@ class UsuarioOut(BaseModel):
     id: str
     nombre: str
     email: EmailStr
+    rol: str = "cliente"  # "cliente" | "admin"
 
 
 class Token(BaseModel):

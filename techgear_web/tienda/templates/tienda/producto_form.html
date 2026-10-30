@@ -1,0 +1,39 @@
+{% extends "tienda/base.html" %}
+{% load static %}
+{% block titulo %}{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %} · TechGear{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'tienda/css/dashboard.css' %}">{% endblock %}
+{% block contenido %}
+<section class="formulario formulario--ancho">
+  <h1>{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %}</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label>Nombre
+      <input type="text" name="nombre" value="{{ producto.nombre }}" minlength="2" required autofocus>
+    </label>
+    <label>Descripción
+      <textarea name="descripcion" rows="3">{{ producto.descripcion }}</textarea>
+    </label>
+    <label>Categoría
+      <input type="text" name="categoria" value="{{ producto.categoria }}" required>
+    </label>
+    <label>Foto del producto
+  {% if modo == "editar" %}<small>(deja vacío para conservar la actual)</small>{% endif %}
+  {% if producto.imagen %}<img src="{{ producto.imagen }}" alt="" class="preview">{% endif %}
+  <input type="file" name="foto" accept="image/png,image/jpeg,image/webp"
+         {% if modo == "crear" %}required{% endif %}>
+</label>
+    <div class="fila-2">
+      <label>Precio
+        <input type="number" name="precio" value="{{ producto.precio }}" step="0.01" min="0.01" required>
+      </label>
+      <label>Stock
+        <input type="number" name="stock" value="{{ producto.stock }}" step="1" min="0" required>
+      </label>
+    </div>
+    <div class="form-botones">
+      <a href="{% url 'dashboard' %}" class="btn btn--borde">Cancelar</a>
+      <button type="submit" class="btn">{% if modo == "crear" %}Crear producto{% else %}Guardar cambios{% endif %}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

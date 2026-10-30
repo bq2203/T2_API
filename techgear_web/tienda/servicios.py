@@ -54,3 +54,20 @@ def login(email, password):
 
 def perfil(token):
     return llamar("GET", "/usuarios/me", token=token)
+
+
+# ---------- CRUD de productos (los 4 métodos HTTP hacia FastAPI) ----------
+def obtener_producto(producto_id):
+    return llamar("GET", f"/productos/{producto_id}")
+
+
+def crear_producto(token, datos):
+    return llamar("POST", "/productos", token=token, json=datos)
+
+
+def actualizar_producto(token, producto_id, datos):
+    return llamar("PUT", f"/productos/{producto_id}", token=token, json=datos)
+
+
+def eliminar_producto(token, producto_id):
+    return llamar("DELETE", f"/productos/{producto_id}", token=token)

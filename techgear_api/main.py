@@ -20,9 +20,15 @@ from models.models import (
     UsuarioLogin,
     UsuarioOut,
 )
-from seguridad import crear_token, decodificar_token, hashear_password, verificar_password
+from seguridad import (
+    crear_token,
+    decodificar_token,
+    es_email_admin,
+    hashear_password,
+    verificar_password,
+)
 
-app = FastAPI(title="TechGear API", version="1.1.0")
+app = FastAPI(title="TechGear API", version="1.2.0")
 bearer = HTTPBearer(auto_error=False)
 
 
@@ -46,6 +52,35 @@ def serializar(doc: dict) -> dict:
     return doc
 
 
+def usuario_publico(doc: dict) -> dict:
+    return {
+        "id": str(doc["_id"]),
+        "nombre": doc["nombre"],
+        "email": doc["email"],
+        "rol": doc.get("rol", "cliente"),
+    }
+
+
+def usuario_actual(
+    cred: HTTPAuthorizationCredentials = Depends(bearer),
+) -> dict:
+    """Dependencia: exige 'Authorization: Bearer <jwt>' y devuelve el usuario."""
+    if cred is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Falta el token")
+    user_id = decodificar_token(cred.credentials)
+    usuario = usuarios_collection.find_one({"_id": to_oid(user_id)})
+    if not usuario:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario no existe")
+    return usuario
+
+
+def solo_admin(usuario: dict = Depends(usuario_actual)) -> dict:
+    """Dependencia: deja pasar únicamente a usuarios con rol 'admin'."""
+    if usuario.get("rol") != "admin":
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Se requiere rol de administrador")
+    return usuario
+
+
 # ---------- Productos (CRUD) ----------
 @app.post(
     "/productos",
@@ -53,7 +88,7 @@ def serializar(doc: dict) -> dict:
     status_code=status.HTTP_201_CREATED,
     tags=["Productos"],
 )
-def crear_producto(producto: ProductoCreate):
+def crear_producto(producto: ProductoCreate, _: dict = Depends(solo_admin)):
     res = productos_collection.insert_one(producto.model_dump())
     return serializar(productos_collection.find_one({"_id": res.inserted_id}))
 
@@ -72,7 +107,9 @@ def obtener_producto(producto_id: str):
 
 
 @app.put("/productos/{producto_id}", response_model=ProductoOut, tags=["Productos"])
-def actualizar_producto(producto_id: str, producto: ProductoUpdate):
+def actualizar_producto(
+    producto_id: str, producto: ProductoUpdate, _: dict = Depends(solo_admin)
+):
     cambios = producto.model_dump(exclude_unset=True)
     if not cambios:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "No hay campos para actualizar")
@@ -85,7 +122,7 @@ def actualizar_producto(producto_id: str, producto: ProductoUpdate):
 
 
 @app.delete("/productos/{producto_id}", tags=["Productos"])
-def eliminar_producto(producto_id: str):
+def eliminar_producto(producto_id: str, _: dict = Depends(solo_admin)):
     res = productos_collection.delete_one({"_id": to_oid(producto_id)})
     if res.deleted_count == 0:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Producto no encontrado")
@@ -133,23 +170,6 @@ def listar_pedidos():
 
 
 # ---------- Usuarios (registro, login con JWT, perfil) ----------
-def usuario_publico(doc: dict) -> dict:
-    return {"id": str(doc["_id"]), "nombre": doc["nombre"], "email": doc["email"]}
-
-
-def usuario_actual(
-    cred: HTTPAuthorizationCredentials = Depends(bearer),
-) -> dict:
-    """Dependencia: exige 'Authorization: Bearer <jwt>' y devuelve el usuario."""
-    if cred is None:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Falta el token")
-    user_id = decodificar_token(cred.credentials)
-    usuario = usuarios_collection.find_one({"_id": to_oid(user_id)})
-    if not usuario:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario no existe")
-    return usuario
-
-
 @app.post(
     "/usuarios/registro",
     response_model=UsuarioOut,
@@ -161,6 +181,7 @@ def registrar_usuario(usuario: Usuario):
         "nombre": usuario.nombre,
         "email": usuario.email.lower(),
         "password": hashear_password(usuario.password),
+        "rol": "admin" if es_email_admin(usuario.email) else "cliente",
     }
     try:
         res = usuarios_collection.insert_one(doc)
@@ -174,6 +195,9 @@ def login(datos: UsuarioLogin):
     usuario = usuarios_collection.find_one({"email": datos.email.lower()})
     if not usuario or not verificar_password(datos.password, usuario["password"]):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email o contraseña incorrectos")
+    if es_email_admin(usuario["email"]) and usuario.get("rol") != "admin":
+        usuarios_collection.update_one({"_id": usuario["_id"]}, {"$set": {"rol": "admin"}})
+        usuario["rol"] = "admin"
     return {
         "access_token": crear_token(str(usuario["_id"])),
         "token_type": "bearer",

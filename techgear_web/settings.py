@@ -136,3 +136,7 @@ API_URL = 'http://127.0.0.1:8000'
 SESSION_COOKIE_AGE = 60 * 60
 SESSION_COOKIE_HTTPONLY = True
 SESSION_SAVE_EVERY_REQUEST = False
+
+# Fotos de productos subidas desde el dashboard
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

@@ -17,7 +17,7 @@
 {% if productos %}
   <div class="grilla">
     {% for p in productos %}
-      <article class="tarjeta">
+      <article class="tarjeta">{% if p.imagen %}<img src="{{ p.imagen }}" alt="{{ p.nombre }}" class="tarjeta__img" loading="lazy">{% endif %}
         <span class="etiqueta">{{ p.categoria }}</span>
         <h2>{{ p.nombre }}</h2>
         <p class="tarjeta__desc">{{ p.descripcion|default:"Sin descripción." }}</p>
