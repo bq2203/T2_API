@@ -1,0 +1,40 @@
+{% load static %}<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}TechGear{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'tienda/css/estilos.css' %}">
+</head>
+<body>
+  <header class="barra">
+    <div class="contenedor barra__fila">
+      <a href="{% url 'catalogo' %}" class="logo">Tech<span>Gear</span></a>
+      <nav class="barra__nav">
+        <a href="{% url 'catalogo' %}">Catálogo</a>
+        {% if request.session.token %}
+          <a href="{% url 'perfil' %}">{{ request.session.usuario.nombre }}</a>
+          <form method="post" action="{% url 'logout' %}" class="en-linea">
+            {% csrf_token %}
+            <button type="submit" class="btn btn--borde">Salir</button>
+          </form>
+        {% else %}
+          <a href="{% url 'login' %}">Iniciar sesión</a>
+          <a href="{% url 'registro' %}" class="btn">Registrarse</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="contenedor">
+    {% if messages %}
+      <ul class="mensajes">
+        {% for m in messages %}<li class="mensaje mensaje--{{ m.tags }}">{{ m }}</li>{% endfor %}
+      </ul>
+    {% endif %}
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <footer class="pie"><div class="contenedor">© TechGear · Taller 2 API</div></footer>
+</body>
+</html>

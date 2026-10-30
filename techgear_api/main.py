@@ -4,18 +4,32 @@ from typing import List
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pymongo.errors import DuplicateKeyError
 
-from db.database import pedidos_collection, productos_collection
+from db.database import pedidos_collection, productos_collection, usuarios_collection
 from models.models import (
     PedidoCreate,
     PedidoOut,
     ProductoCreate,
     ProductoOut,
     ProductoUpdate,
+    Token,
+    Usuario,
+    UsuarioLogin,
+    UsuarioOut,
 )
+from seguridad import crear_token, decodificar_token, hashear_password, verificar_password
 
-app = FastAPI(title="TechGear API", version="1.0.0")
+app = FastAPI(title="TechGear API", version="1.1.0")
+bearer = HTTPBearer(auto_error=False)
+
+
+@app.on_event("startup")
+def crear_indices():
+    # Un email = una cuenta (lo garantiza MongoDB, no solo el código)
+    usuarios_collection.create_index("email", unique=True)
 
 # uvicorn main:app --reload
 
@@ -116,3 +130,57 @@ def registrar_pedido(pedido: PedidoCreate):
 @app.get("/pedidos", response_model=List[PedidoOut], tags=["Pedidos"])
 def listar_pedidos():
     return [serializar(p) for p in pedidos_collection.find()]
+
+
+# ---------- Usuarios (registro, login con JWT, perfil) ----------
+def usuario_publico(doc: dict) -> dict:
+    return {"id": str(doc["_id"]), "nombre": doc["nombre"], "email": doc["email"]}
+
+
+def usuario_actual(
+    cred: HTTPAuthorizationCredentials = Depends(bearer),
+) -> dict:
+    """Dependencia: exige 'Authorization: Bearer <jwt>' y devuelve el usuario."""
+    if cred is None:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Falta el token")
+    user_id = decodificar_token(cred.credentials)
+    usuario = usuarios_collection.find_one({"_id": to_oid(user_id)})
+    if not usuario:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Usuario no existe")
+    return usuario
+
+
+@app.post(
+    "/usuarios/registro",
+    response_model=UsuarioOut,
+    status_code=status.HTTP_201_CREATED,
+    tags=["Usuarios"],
+)
+def registrar_usuario(usuario: Usuario):
+    doc = {
+        "nombre": usuario.nombre,
+        "email": usuario.email.lower(),
+        "password": hashear_password(usuario.password),
+    }
+    try:
+        res = usuarios_collection.insert_one(doc)
+    except DuplicateKeyError:
+        raise HTTPException(status.HTTP_409_CONFLICT, "El email ya está registrado")
+    return usuario_publico(usuarios_collection.find_one({"_id": res.inserted_id}))
+
+
+@app.post("/usuarios/login", response_model=Token, tags=["Usuarios"])
+def login(datos: UsuarioLogin):
+    usuario = usuarios_collection.find_one({"email": datos.email.lower()})
+    if not usuario or not verificar_password(datos.password, usuario["password"]):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email o contraseña incorrectos")
+    return {
+        "access_token": crear_token(str(usuario["_id"])),
+        "token_type": "bearer",
+        "usuario": usuario_publico(usuario),
+    }
+
+
+@app.get("/usuarios/me", response_model=UsuarioOut, tags=["Usuarios"])
+def mi_perfil(usuario: dict = Depends(usuario_actual)):
+    return usuario_publico(usuario)

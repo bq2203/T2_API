@@ -1,0 +1,90 @@
+:root{
+  --fondo:#f5f7fa; --superficie:#fff; --texto:#1b2430; --suave:#667085; --borde:#e2e6ec;
+  --primario:#2457f5; --primario-osc:#1a42c4; --ok:#117a42; --error:#b42318;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--fondo);color:var(--texto);min-height:100vh;display:flex;flex-direction:column}
+main{flex:1;padding-block:28px}
+.contenedor{width:min(1100px,100% - 32px);margin-inline:auto}
+a{color:var(--primario)}
+h1{margin:0 0 20px;font-size:1.7rem}
+
+.barra{background:var(--superficie);border-bottom:1px solid var(--borde)}
+.barra__fila{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:60px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.3rem;text-decoration:none;color:var(--texto)}
+.logo span{color:var(--primario)}
+.barra__nav{display:flex;align-items:center;gap:16px}
+.barra__nav a:not(.btn){text-decoration:none;color:var(--texto);font-weight:500}
+.barra__nav a:not(.btn):hover{color:var(--primario)}
+.en-linea{display:inline;margin:0}
+
+.btn{display:inline-block;padding:9px 16px;border:1px solid var(--primario);background:var(--primario);color:#fff;border-radius:8px;font:inherit;font-weight:600;cursor:pointer;text-decoration:none}
+.btn:hover{background:var(--primario-osc)}
+.btn--borde{background:transparent;color:var(--primario)}
+.btn--borde:hover{background:#eef2ff}
+.btn--ancho{width:100%;margin-top:6px}
+
+.mensajes{list-style:none;padding:0;margin:0 0 20px}
+.mensaje{padding:11px 14px;border-radius:8px;margin-bottom:8px;border:1px solid var(--borde);background:var(--superficie)}
+.mensaje--success{border-color:#a6e3c0;background:#ecfbf2;color:var(--ok)}
+.mensaje--error{border-color:#f4b4ad;background:#fff1f0;color:var(--error)}
+
+.filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px}
+.filtros input,.filtros select{padding:9px 12px;border:1px solid var(--borde);border-radius:8px;font:inherit;background:var(--superficie)}
+.filtros input{flex:1;min-width:200px}
+
+.grilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px}
+.tarjeta{background:var(--superficie);border:1px solid var(--borde);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px;transition:box-shadow .15s,transform .15s}
+.tarjeta:hover{box-shadow:0 6px 18px rgba(16,24,40,.08);transform:translateY(-2px)}
+.tarjeta h2{margin:0;font-size:1.1rem}
+.tarjeta__desc{margin:0;color:var(--suave);font-size:.92rem;flex:1}
+.tarjeta__pie{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+.etiqueta{align-self:flex-start;font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--primario);background:#eef2ff;padding:3px 9px;border-radius:99px}
+.precio{font-size:1.2rem}
+.stock{font-size:.8rem;font-weight:600}
+.stock--ok{color:var(--ok)} .stock--no{color:var(--error)}
+.vacio{color:var(--suave);text-align:center;padding:40px 0}
+
+.formulario{max-width:420px;margin:20px auto;background:var(--superficie);border:1px solid var(--borde);border-radius:12px;padding:28px}
+.formulario form{display:grid;gap:14px}
+.formulario label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+.formulario small{font-weight:400;color:var(--suave)}
+.formulario input{padding:10px 12px;border:1px solid var(--borde);border-radius:8px;font:inherit}
+.formulario input:focus,.filtros input:focus,.filtros select:focus{outline:2px solid var(--primario);outline-offset:0;border-color:transparent}
+.formulario__alt{margin:18px 0 0;text-align:center;color:var(--suave);font-size:.9rem}
+.datos{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;margin:0}
+.datos dt{color:var(--suave)} .datos dd{margin:0;font-weight:600;word-break:break-all}
+
+.pie{border-top:1px solid var(--borde);padding:16px 0;color:var(--suave);font-size:.85rem}
+/* ===== Responsive ===== */
+
+/* Tablet y móvil */
+@media (max-width: 720px) {
+  main { padding-block: 18px; }
+  h1 { font-size: 1.4rem; }
+
+  /* Barra: logo arriba, links abajo centrados */
+  .barra__fila { justify-content: center; padding-block: 10px; gap: 8px; }
+  .barra__nav { width: 100%; justify-content: center; flex-wrap: wrap; gap: 10px; }
+
+  /* Filtros apilados */
+  .filtros input,
+  .filtros select,
+  .filtros .btn { width: 100%; flex: 1 1 100%; min-width: 0; }
+
+  /* 16px evita que iPhone haga zoom al tocar un input */
+  .formulario input,
+  .filtros input,
+  .filtros select { font-size: 16px; }
+
+  .formulario { margin: 8px auto; padding: 20px; }
+}
+
+/* Móvil pequeño */
+@media (max-width: 480px) {
+  .grilla { grid-template-columns: 1fr; }
+  .tarjeta__pie { flex-wrap: wrap; gap: 6px; }
+  .datos { grid-template-columns: 1fr; gap: 2px; }
+  .datos dd { margin-bottom: 10px; }
+  .pie { text-align: center; }
+}

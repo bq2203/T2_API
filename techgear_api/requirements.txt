@@ -3,3 +3,5 @@ uvicorn[standard]>=0.34
 pymongo>=4.15
 pydantic[email]>=2.12
 python-dotenv
+PyJWT>=2.8
+bcrypt>=4.0

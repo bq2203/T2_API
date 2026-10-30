@@ -1,0 +1,24 @@
+{% extends "tienda/base.html" %}
+{% block titulo %}Registro · TechGear{% endblock %}
+{% block contenido %}
+<section class="formulario">
+  <h1>Crear cuenta</h1>
+  <form method="post">
+    {% csrf_token %}
+    <label>Nombre
+      <input type="text" name="nombre" value="{{ nombre }}" minlength="2" required autofocus>
+    </label>
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" required>
+    </label>
+    <label>Contraseña <small>(mínimo 6 caracteres)</small>
+      <input type="password" name="password" minlength="6" maxlength="72" required>
+    </label>
+    <label>Repite la contraseña
+      <input type="password" name="password2" minlength="6" maxlength="72" required>
+    </label>
+    <button type="submit" class="btn btn--ancho">Registrarme</button>
+  </form>
+  <p class="formulario__alt">¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
+</section>
+{% endblock %}

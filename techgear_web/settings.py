@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-a2c81c&%4a%hn+pu4wic*nh@92@)p3wdqexl0oe!y#9&za)x8u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'techgear_web.tienda',
 ]
 
 MIDDLEWARE = [
@@ -102,9 +103,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-co'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -125,3 +126,13 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+
+# API FastAPI (techgear_api): uvicorn main:app --reload  ->  puerto 8000 por defecto
+# Django corre en 8001:  python manage.py runserver 8001
+API_URL = 'http://127.0.0.1:8000'
+
+# Sesiones de usuario (guardan el JWT de la API) - 1 hora, igual que el token
+SESSION_COOKIE_AGE = 60 * 60
+SESSION_COOKIE_HTTPONLY = True
+SESSION_SAVE_EVERY_REQUEST = False

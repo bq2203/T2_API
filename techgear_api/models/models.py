@@ -54,6 +54,27 @@ class PedidoOut(PedidoCreate):
 
 # ---------- Usuarios ----------
 class Usuario(BaseModel):
+    """POST /usuarios/registro: lo que envía el cliente."""
     nombre: str = Field(..., min_length=2)
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=6, max_length=72)
+
+
+class UsuarioLogin(BaseModel):
+    """POST /usuarios/login."""
+    email: EmailStr
+    password: str
+
+
+class UsuarioOut(BaseModel):
+    """Respuestas: usuario SIN password."""
+    id: str
+    nombre: str
+    email: EmailStr
+
+
+class Token(BaseModel):
+    """Respuesta del login: JWT + datos del usuario."""
+    access_token: str
+    token_type: str = "bearer"
+    usuario: UsuarioOut

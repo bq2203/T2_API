@@ -1,0 +1,38 @@
+{% extends "tienda/base.html" %}
+{% block titulo %}Catálogo · TechGear{% endblock %}
+{% block contenido %}
+<h1>Catálogo</h1>
+
+<form method="get" class="filtros">
+  <input type="search" name="q" value="{{ q }}" placeholder="Buscar producto…">
+  <select name="categoria" onchange="this.form.submit()">
+    <option value="">Todas las categorías</option>
+    {% for c in categorias %}
+      <option value="{{ c }}" {% if c == categoria_activa %}selected{% endif %}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn">Filtrar</button>
+</form>
+
+{% if productos %}
+  <div class="grilla">
+    {% for p in productos %}
+      <article class="tarjeta">
+        <span class="etiqueta">{{ p.categoria }}</span>
+        <h2>{{ p.nombre }}</h2>
+        <p class="tarjeta__desc">{{ p.descripcion|default:"Sin descripción." }}</p>
+        <div class="tarjeta__pie">
+          <strong class="precio">${{ p.precio|floatformat:2 }}</strong>
+          {% if p.stock > 0 %}
+            <span class="stock stock--ok">{{ p.stock }} disponibles</span>
+          {% else %}
+            <span class="stock stock--no">Agotado</span>
+          {% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <p class="vacio">No hay productos para mostrar.</p>
+{% endif %}
+{% endblock %}

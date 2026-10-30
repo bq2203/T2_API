@@ -24,3 +24,4 @@ db = client[MONGO_DB_NAME]
 
 productos_collection = db["productos"]
 pedidos_collection = db["pedidos"]
+usuarios_collection = db["usuarios"]

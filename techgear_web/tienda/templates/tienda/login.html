@@ -1,0 +1,18 @@
+{% extends "tienda/base.html" %}
+{% block titulo %}Iniciar sesión · TechGear{% endblock %}
+{% block contenido %}
+<section class="formulario">
+  <h1>Iniciar sesión</h1>
+  <form method="post">
+    {% csrf_token %}
+    <label>Email
+      <input type="email" name="email" value="{{ email }}" required autofocus>
+    </label>
+    <label>Contraseña
+      <input type="password" name="password" required>
+    </label>
+    <button type="submit" class="btn btn--ancho">Entrar</button>
+  </form>
+  <p class="formulario__alt">¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate</a></p>
+</section>
+{% endblock %}
