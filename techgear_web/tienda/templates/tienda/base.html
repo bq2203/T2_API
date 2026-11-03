@@ -4,41 +4,56 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block titulo %}TechGear{% endblock %}</title>
-  <link rel="stylesheet" href="{% static 'tienda/css/estilos.css' %}">
-  {% block extra_head %}{% endblock %}
+  <link rel="stylesheet" href="{% static 'tienda/bootstrap/css/bootstrap.min.css' %}">
 </head>
-<body>
-  <header class="barra">
-    <div class="contenedor barra__fila">
-      <a href="{% url 'catalogo' %}" class="logo">Tech<span>Gear</span></a>
-      <nav class="barra__nav">
-        <a href="{% url 'catalogo' %}">Catálogo</a>
-        {% if request.session.token %}
-          {% if request.session.usuario.rol == "admin" %}
-            <a href="{% url 'dashboard' %}">Dashboard</a>
-          {% endif %}
-          <a href="{% url 'perfil' %}">{{ request.session.usuario.nombre }}</a>
-          <form method="post" action="{% url 'logout' %}" class="en-linea">
-            {% csrf_token %}
-            <button type="submit" class="btn btn--borde">Salir</button>
-          </form>
-        {% else %}
-          <a href="{% url 'login' %}">Iniciar sesión</a>
-          <a href="{% url 'registro' %}" class="btn">Registrarse</a>
-        {% endif %}
-      </nav>
-    </div>
-  </header>
+<body class="bg-body-tertiary d-flex flex-column min-vh-100">
 
-  <main class="contenedor">
-    {% if messages %}
-      <ul class="mensajes">
-        {% for m in messages %}<li class="mensaje mensaje--{{ m.tags }}">{{ m }}</li>{% endfor %}
-      </ul>
-    {% endif %}
+  <nav class="navbar navbar-expand-md bg-body border-bottom">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="{% url 'catalogo' %}">Tech<span class="text-primary">Gear</span></a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+              data-bs-target="#menuPrincipal" aria-controls="menuPrincipal"
+              aria-expanded="false" aria-label="Abrir menú">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="menuPrincipal">
+        <ul class="navbar-nav ms-auto align-items-md-center gap-md-2">
+          <li class="nav-item"><a class="nav-link" href="{% url 'catalogo' %}">Catálogo</a></li>
+          {% if request.session.token %}
+            {% if request.session.usuario.rol == "admin" %}
+              <li class="nav-item"><a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'perfil' %}">{{ request.session.usuario.nombre }}</a></li>
+            <li class="nav-item">
+              <form method="post" action="{% url 'logout' %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary btn-sm">Salir</button>
+              </form>
+            </li>
+          {% else %}
+            <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Iniciar sesión</a></li>
+            <li class="nav-item"><a class="btn btn-primary btn-sm" href="{% url 'registro' %}">Registrarse</a></li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container py-4 flex-grow-1">
+    {% for m in messages %}
+      <div class="alert alert-{% if m.tags == 'error' %}danger{% else %}{{ m.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ m }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+      </div>
+    {% endfor %}
     {% block contenido %}{% endblock %}
   </main>
 
-  <footer class="pie"><div class="contenedor">© TechGear · Taller 2 API</div></footer>
+  <footer class="border-top bg-body py-3 text-body-secondary small">
+    <div class="container">© TechGear · Taller 2 API</div>
+  </footer>
+
+  <script src="{% static 'tienda/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 </body>
 </html>

@@ -1,39 +1,65 @@
 {% extends "tienda/base.html" %}
-{% load static %}
 {% block titulo %}{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %} · TechGear{% endblock %}
-{% block extra_head %}<link rel="stylesheet" href="{% static 'tienda/css/dashboard.css' %}">{% endblock %}
 {% block contenido %}
-<section class="formulario formulario--ancho">
-  <h1>{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %}</h1>
-  <form method="post" enctype="multipart/form-data">
-    {% csrf_token %}
-    <label>Nombre
-      <input type="text" name="nombre" value="{{ producto.nombre }}" minlength="2" required autofocus>
-    </label>
-    <label>Descripción
-      <textarea name="descripcion" rows="3">{{ producto.descripcion }}</textarea>
-    </label>
-    <label>Categoría
-      <input type="text" name="categoria" value="{{ producto.categoria }}" required>
-    </label>
-    <label>Foto del producto
-  {% if modo == "editar" %}<small>(deja vacío para conservar la actual)</small>{% endif %}
-  {% if producto.imagen %}<img src="{{ producto.imagen }}" alt="" class="preview">{% endif %}
-  <input type="file" name="foto" accept="image/png,image/jpeg,image/webp"
-         {% if modo == "crear" %}required{% endif %}>
-</label>
-    <div class="fila-2">
-      <label>Precio
-        <input type="number" name="precio" value="{{ producto.precio }}" step="0.01" min="0.01" required>
-      </label>
-      <label>Stock
-        <input type="number" name="stock" value="{{ producto.stock }}" step="1" min="0" required>
-      </label>
+<div class="row justify-content-center">
+  <div class="col-12 col-md-10 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-body">
+        <h1 class="h4 mb-0">{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %}</h1>
+      </div>
+      <div class="card-body p-4">
+        <form method="post" enctype="multipart/form-data" class="row g-3">
+          {% csrf_token %}
+
+          <div class="col-12">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" id="nombre" name="nombre" value="{{ producto.nombre }}" class="form-control" minlength="2" required autofocus>
+          </div>
+
+          <div class="col-12">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea id="descripcion" name="descripcion" rows="3" class="form-control">{{ producto.descripcion }}</textarea>
+          </div>
+
+          <div class="col-12">
+            <label for="categoria" class="form-label">Categoría</label>
+            <input type="text" id="categoria" name="categoria" value="{{ producto.categoria }}" class="form-control" required>
+          </div>
+
+          <div class="col-12 col-sm-6">
+            <label for="precio" class="form-label">Precio</label>
+            <div class="input-group">
+              <span class="input-group-text">$</span>
+              <input type="number" id="precio" name="precio" value="{{ producto.precio }}" class="form-control" step="0.01" min="0.01" required>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" id="stock" name="stock" value="{{ producto.stock }}" class="form-control" step="1" min="0" required>
+          </div>
+
+          <div class="col-12">
+            <label for="foto" class="form-label">Foto del producto</label>
+            {% if producto.imagen %}
+              <img src="{{ producto.imagen }}" alt="Foto actual" width="160" class="img-thumbnail d-block mb-2">
+            {% endif %}
+            <input type="file" id="foto" name="foto" class="form-control"
+                   accept="image/png,image/jpeg,image/webp" {% if modo == "crear" %}required{% endif %}>
+            <div class="form-text">
+              JPG, PNG o WEBP, máximo 2 MB.{% if modo == "editar" %} Déjalo vacío para conservar la foto actual.{% endif %}
+            </div>
+          </div>
+
+          <div class="col-12 d-flex flex-column flex-sm-row justify-content-end gap-2">
+            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
+            <button type="submit" class="btn btn-primary">
+              {% if modo == "crear" %}Crear producto{% else %}Guardar cambios{% endif %}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-    <div class="form-botones">
-      <a href="{% url 'dashboard' %}" class="btn btn--borde">Cancelar</a>
-      <button type="submit" class="btn">{% if modo == "crear" %}Crear producto{% else %}Guardar cambios{% endif %}</button>
-    </div>
-  </form>
-</section>
+  </div>
+</div>
 {% endblock %}

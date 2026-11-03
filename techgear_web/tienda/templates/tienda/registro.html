@@ -1,24 +1,37 @@
 {% extends "tienda/base.html" %}
 {% block titulo %}Registro · TechGear{% endblock %}
 {% block contenido %}
-<section class="formulario">
-  <h1>Crear cuenta</h1>
-  <form method="post">
-    {% csrf_token %}
-    <label>Nombre
-      <input type="text" name="nombre" value="{{ nombre }}" minlength="2" required autofocus>
-    </label>
-    <label>Email
-      <input type="email" name="email" value="{{ email }}" required>
-    </label>
-    <label>Contraseña <small>(mínimo 6 caracteres)</small>
-      <input type="password" name="password" minlength="6" maxlength="72" required>
-    </label>
-    <label>Repite la contraseña
-      <input type="password" name="password2" minlength="6" maxlength="72" required>
-    </label>
-    <button type="submit" class="btn btn--ancho">Registrarme</button>
-  </form>
-  <p class="formulario__alt">¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
-</section>
+<div class="row justify-content-center">
+  <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h1 class="h3 mb-4 text-center">Crear cuenta</h1>
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre</label>
+            <input type="text" id="nombre" name="nombre" value="{{ nombre }}" class="form-control" minlength="2" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" id="email" name="email" value="{{ email }}" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Contraseña</label>
+            <input type="password" id="password" name="password" class="form-control" minlength="6" maxlength="72" required aria-describedby="ayudaPass">
+            <div id="ayudaPass" class="form-text">Mínimo 6 caracteres.</div>
+          </div>
+          <div class="mb-3">
+            <label for="password2" class="form-label">Repite la contraseña</label>
+            <input type="password" id="password2" name="password2" class="form-control" minlength="6" maxlength="72" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Registrarme</button>
+        </form>
+        <p class="text-center text-body-secondary small mt-3 mb-0">
+          ¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
