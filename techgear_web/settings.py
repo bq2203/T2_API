@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,11 +21,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-a2c81c&%4a%hn+pu4wic*nh@92@)p3wdqexl0oe!y#9&za)x8u'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-dev-key-solo-local')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.vercel.app', '.onrender.com']
 
 
@@ -130,7 +129,7 @@ MAILERS = {
 
 # API FastAPI (techgear_api): uvicorn main:app --reload  ->  puerto 8000 por defecto
 # Django corre en 8001:  python manage.py runserver 8001
-API_URL = 'http://127.0.0.1:8000'
+API_URL = os.environ.get('API_URL', 'http://127.0.0.1:8000').rstrip('/')
 
 # Sesiones de usuario (guardan el JWT de la API) - 1 hora, igual que el token
 SESSION_COOKIE_AGE = 60 * 60
@@ -140,3 +139,7 @@ SESSION_SAVE_EVERY_REQUEST = False
 # Fotos de productos subidas desde el dashboard
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+# --- Vercel: no hay base de datos escribible ---
+# La sesión (con el JWT) viaja firmada en la cookie.
+SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
