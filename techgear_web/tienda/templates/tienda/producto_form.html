@@ -1,65 +1,112 @@
 {% extends "tienda/base.html" %}
-{% block titulo %}{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %} · TechGear{% endblock %}
+{% block titulo %}{% if modo == "editar" %}Editar producto{% else %}Nuevo producto{% endif %} · TechGear{% endblock %}
 {% block contenido %}
-<div class="row justify-content-center">
-  <div class="col-12 col-md-10 col-lg-7">
-    <div class="card shadow-sm">
-      <div class="card-header bg-body">
-        <h1 class="h4 mb-0">{% if modo == "crear" %}Nuevo producto{% else %}Editar producto{% endif %}</h1>
-      </div>
-      <div class="card-body p-4">
-        <form method="post" enctype="multipart/form-data" class="row g-3">
-          {% csrf_token %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{% if modo == "editar" %}Editar producto{% else %}Nuevo producto{% endif %}</li>
+  </ol>
+</nav>
 
+<div class="d-flex align-items-center gap-3 mb-4">
+  <div class="tg-icon-box tg-icon-box-lg"><i class="bi {% if modo == 'editar' %}bi-pencil-square{% else %}bi-plus-square{% endif %}"></i></div>
+  <h1 class="h3 mb-0">{% if modo == "editar" %}Editar producto{% else %}Nuevo producto{% endif %}</h1>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="tg-card p-4">
+        <h2 class="h6 mb-3"><i class="bi bi-card-text me-2"></i>Información del producto</h2>
+        <div class="row g-3">
           <div class="col-12">
             <label for="nombre" class="form-label">Nombre</label>
-            <input type="text" id="nombre" name="nombre" value="{{ producto.nombre }}" class="form-control" minlength="2" required autofocus>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-box-seam"></i></span>
+              <input type="text" name="nombre" id="nombre" class="form-control" value="{{ producto.nombre }}" minlength="2" required>
+            </div>
           </div>
-
-          <div class="col-12">
-            <label for="descripcion" class="form-label">Descripción</label>
-            <textarea id="descripcion" name="descripcion" rows="3" class="form-control">{{ producto.descripcion }}</textarea>
-          </div>
-
-          <div class="col-12">
+          <div class="col-12 col-md-6">
             <label for="categoria" class="form-label">Categoría</label>
-            <input type="text" id="categoria" name="categoria" value="{{ producto.categoria }}" class="form-control" required>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-tag"></i></span>
+              <input type="text" name="categoria" id="categoria" class="form-control" value="{{ producto.categoria }}" placeholder="Teclados, Mouse…" required>
+            </div>
           </div>
-
-          <div class="col-12 col-sm-6">
+          <div class="col-6 col-md-3">
             <label for="precio" class="form-label">Precio</label>
             <div class="input-group">
               <span class="input-group-text">$</span>
-              <input type="number" id="precio" name="precio" value="{{ producto.precio }}" class="form-control" step="0.01" min="0.01" required>
+              <input type="text" inputmode="decimal" name="precio" id="precio" class="form-control"
+                     pattern="[0-9]+([.,][0-9]{1,2})?" value="{{ producto.precio }}" required>
             </div>
           </div>
-
-          <div class="col-12 col-sm-6">
+          <div class="col-6 col-md-3">
             <label for="stock" class="form-label">Stock</label>
-            <input type="number" id="stock" name="stock" value="{{ producto.stock }}" class="form-control" step="1" min="0" required>
-          </div>
-
-          <div class="col-12">
-            <label for="foto" class="form-label">Foto del producto</label>
-            {% if producto.imagen %}
-              <img src="{{ producto.imagen }}" alt="Foto actual" width="160" class="img-thumbnail d-block mb-2">
-            {% endif %}
-            <input type="file" id="foto" name="foto" class="form-control"
-                   accept="image/png,image/jpeg,image/webp" {% if modo == "crear" %}required{% endif %}>
-            <div class="form-text">
-              JPG, PNG o WEBP, máximo 2 MB.{% if modo == "editar" %} Déjalo vacío para conservar la foto actual.{% endif %}
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-stack"></i></span>
+              <input type="number" name="stock" id="stock" class="form-control" min="0" step="1" value="{{ producto.stock }}" required>
             </div>
           </div>
-
-          <div class="col-12 d-flex flex-column flex-sm-row justify-content-end gap-2">
-            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">Cancelar</a>
-            <button type="submit" class="btn btn-primary">
-              {% if modo == "crear" %}Crear producto{% else %}Guardar cambios{% endif %}
-            </button>
+          <div class="col-12">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea name="descripcion" id="descripcion" rows="5" class="form-control"
+                      placeholder="Qué es y qué lo hace especial">{{ producto.descripcion }}</textarea>
           </div>
-        </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="tg-card p-4">
+        <h2 class="h6 mb-3"><i class="bi bi-image me-2"></i>Foto</h2>
+        <div class="tg-upload ratio ratio-1x1 mb-3" id="caja-foto">
+          <div class="tg-img-ph"><i class="bi bi-cloud-arrow-up display-4"></i><small>Vista previa</small></div>
+          {% if producto.imagen %}<img id="vista-previa" src="{{ producto.imagen }}" alt="Foto actual" class="object-fit-cover" onerror="this.remove()">{% endif %}
+        </div>
+        <input type="file" name="foto" id="foto" class="form-control"
+               accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+               {% if modo != "editar" %}required{% endif %}>
+        <div class="form-text" id="ayuda-foto">
+          JPG, PNG o WEBP, máximo 2 MB.{% if modo == "editar" %} Déjala vacía para conservar la actual.{% endif %}
+        </div>
       </div>
     </div>
   </div>
-</div>
+
+  <div class="d-flex justify-content-end gap-2 mt-4">
+    <a href="{% url 'dashboard' %}" class="btn btn-light">Cancelar</a>
+    <button type="submit" class="btn btn-primary px-4">
+      <i class="bi bi-check2-circle me-1"></i>{% if modo == "editar" %}Guardar cambios{% else %}Crear producto{% endif %}
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const inputFoto = document.getElementById("foto");
+  const cajaFoto = document.getElementById("caja-foto");
+  const MAX_MB = 2;
+
+  inputFoto.addEventListener("change", () => {
+    const archivo = inputFoto.files[0];
+    inputFoto.setCustomValidity("");
+    if (!archivo) return;
+    if (archivo.size > MAX_MB * 1024 * 1024) {
+      inputFoto.setCustomValidity("La foto no puede pesar más de " + MAX_MB + " MB.");
+      inputFoto.reportValidity();
+      return;
+    }
+    let img = document.getElementById("vista-previa");
+    if (!img) {
+      img = document.createElement("img");
+      img.id = "vista-previa";
+      img.className = "object-fit-cover";
+      cajaFoto.appendChild(img);
+    }
+    img.src = URL.createObjectURL(archivo);
+  });
+</script>
 {% endblock %}

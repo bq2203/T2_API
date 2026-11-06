@@ -4,9 +4,10 @@ from typing import List
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pymongo.errors import DuplicateKeyError
+from pymongo.errors import DuplicateKeyError, PyMongoError
 
 from db.database import pedidos_collection, productos_collection, usuarios_collection
 from models.models import (
@@ -31,6 +32,14 @@ from seguridad import (
 
 app = FastAPI(title="TechGear API", version="1.2.0")
 bearer = HTTPBearer(auto_error=False)
+
+@app.exception_handler(PyMongoError)
+async def error_base_de_datos(request: Request, exc: PyMongoError):
+    """Si MongoDB Atlas no responde, el cliente recibe un 503 claro (no un 500 genérico)."""
+    return JSONResponse(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        content={"detail": "Base de datos no disponible. Intenta de nuevo en un momento."},
+    )
 
 
 @app.on_event("startup")
@@ -130,12 +139,6 @@ def eliminar_producto(producto_id: str, _: dict = Depends(solo_admin)):
     return {"mensaje": "Producto eliminado"}
 
 
-# =====================================================================
-# techgear_api/main.py  ->  REEMPLAZA solo la sección "# ---------- Pedidos ----------"
-# (desde @app.post("/pedidos") hasta el final de listar_pedidos).
-# También agrega a los imports de models.py: nada nuevo (PedidoCreate y PedidoOut ya están).
-# =====================================================================
-
 # ---------- Pedidos ----------
 @app.post(
     "/pedidos",
@@ -183,7 +186,11 @@ def registrar_pedido(pedido: PedidoCreate, usuario: dict = Depends(usuario_actua
         "estado": "pendiente",
         "fecha": datetime.now(),
     }
-    res = pedidos_collection.insert_one(data)
+    try:
+        res = pedidos_collection.insert_one(data)
+    except PyMongoError:
+        _revertir_stock(reservados)
+        raise
     return serializar(pedidos_collection.find_one({"_id": res.inserted_id}))
 
 

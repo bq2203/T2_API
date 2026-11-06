@@ -1,0 +1,11 @@
+{% extends "tienda/base.html" %}
+{% block titulo %}Página no encontrada · TechGear{% endblock %}
+{% block contenido %}
+<div class="tg-card text-center py-5 px-3 mx-auto" style="max-width:560px">
+  <div class="tg-icon-box tg-icon-box-lg mx-auto mb-3"><i class="bi bi-compass"></i></div>
+  <div class="tg-display display-4 mb-1">404</div>
+  <h1 class="h4">No encontramos esta página</h1>
+  <p class="text-body-secondary">El enlace puede estar mal escrito o el producto ya no está disponible.</p>
+  <a href="{% url 'catalogo' %}" class="btn btn-primary"><i class="bi bi-grid me-2"></i>Volver al catálogo</a>
+</div>
+{% endblock %}

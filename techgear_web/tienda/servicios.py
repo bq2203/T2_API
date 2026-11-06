@@ -2,12 +2,11 @@
 import requests
 from django.conf import settings
 
-TIMEOUT = 8
-
+TIMEOUT = (10, 60)
 
 class ErrorAPI(Exception):
     """La API respondió con error o no está disponible."""
-
+    
     def __init__(self, mensaje, status=None):
         super().__init__(mensaje)
         self.mensaje = mensaje
@@ -17,24 +16,33 @@ class ErrorAPI(Exception):
 def _mensaje_error(resp):
     try:
         detalle = resp.json().get("detail")
-    except ValueError:
-        return f"Error {resp.status_code}"
+    except (ValueError, AttributeError):
+        detalle = None
     if isinstance(detalle, list):  # errores de validación de Pydantic
         return "; ".join(e.get("msg", "dato inválido") for e in detalle)
-    return detalle or f"Error {resp.status_code}"
-
-
+    if detalle:
+        return str(detalle)
+    if resp.status_code >= 500:
+        return "El servicio no está disponible por ahora. Intenta de nuevo en unos segundos."
+    return f"Error {resp.status_code}"
+ 
+ 
 def llamar(metodo, ruta, token=None, **kwargs):
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     try:
         resp = requests.request(
             metodo, f"{settings.API_URL}{ruta}", headers=headers, timeout=TIMEOUT, **kwargs
         )
+    except requests.Timeout:
+        raise ErrorAPI("La API tardó demasiado en responder. Intenta de nuevo en unos segundos.")
     except requests.RequestException:
-        raise ErrorAPI("No se pudo conectar con la API de TechGear.")
+        raise ErrorAPI("No se pudo conectar con la API de TechGear. Intenta más tarde.")
     if not resp.ok:
         raise ErrorAPI(_mensaje_error(resp), resp.status_code)
-    return resp.json()
+    try:
+        return resp.json()
+    except ValueError:
+        raise ErrorAPI("La API devolvió una respuesta inesperada.")
 
 
 def listar_productos():

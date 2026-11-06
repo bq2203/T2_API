@@ -2,104 +2,197 @@
 {% block titulo %}{{ producto.nombre }} · TechGear{% endblock %}
 {% block contenido %}
 <nav aria-label="breadcrumb">
-  <ol class="breadcrumb">
-    <li class="breadcrumb-item"><a href="{% url 'catalogo' %}">Catálogo</a></li>
+  <ol class="breadcrumb small">
+    <li class="breadcrumb-item"><a href="{% url 'catalogo' %}"><i class="bi bi-grid-fill me-1"></i>Catálogo</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'catalogo' %}?categoria={{ producto.categoria|urlencode }}">{{ producto.categoria }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre }}</li>
   </ol>
 </nav>
 
-<div class="row g-4">
-  <div class="col-12 col-md-5">
-    <div class="ratio ratio-1x1 bg-body-secondary rounded shadow-sm overflow-hidden">
-      {% if producto.imagen %}
-        <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}" class="object-fit-cover">
-      {% else %}
-        <div class="d-flex align-items-center justify-content-center text-body-secondary">Sin foto</div>
-      {% endif %}
+<div class="row g-4 g-lg-5">
+  <div class="col-12 col-md-6">
+    <div class="tg-card overflow-hidden {% if producto.stock <= 0 %}tg-soldout{% endif %}">
+      <div class="tg-img">
+        <div class="ratio ratio-1x1">
+          <div class="tg-img-ph"><i class="bi bi-image display-3"></i><span>Sin imagen</span></div>
+          {% if producto.imagen %}<img src="{{ producto.imagen }}" alt="{{ producto.nombre }}" onerror="this.remove()">{% endif %}
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="col-12 col-md-7">
-    <span class="badge text-bg-primary mb-2">{{ producto.categoria }}</span>
-    <h1 class="h2">{{ producto.nombre }}</h1>
-    <p class="text-body-secondary">{{ producto.descripcion|default:"Sin descripción." }}</p>
-    <p class="display-6 fw-bold mb-1">${{ producto.precio|floatformat:2 }}</p>
-    {% if producto.stock > 0 %}
-      <p><span class="badge text-bg-success">{{ producto.stock }} disponibles</span></p>
-    {% else %}
-      <p><span class="badge text-bg-danger">Agotado</span></p>
-    {% endif %}
-
-    {% if producto.stock > 0 %}
-      {% if request.session.token %}
-        <div class="card shadow-sm mt-3">
-          <div class="card-body">
-            <h2 class="h5 mb-3">Datos del pedido</h2>
-            <form method="post" action="{% url 'comprar' producto.id %}" id="form-compra">
-              {% csrf_token %}
-              <div class="row g-3">
-                <div class="col-6 col-md-4">
-                  <label for="cantidad" class="form-label">Cantidad</label>
-                  <input type="number" name="cantidad" id="cantidad" class="form-control"
-                         min="1" max="{{ producto.stock }}" value="{{ form.cantidad|default:1 }}"
-                         data-precio="{{ producto.precio|stringformat:'f' }}" required>
-                </div>
-                <div class="col-6 col-md-8 d-flex align-items-end">
-                  <span class="fs-5">Total: <strong id="total">${{ producto.precio|floatformat:2 }}</strong></span>
-                </div>
-                <div class="col-12 col-md-8">
-                  <label for="direccion" class="form-label">Dirección de envío</label>
-                  <input type="text" name="direccion" id="direccion" class="form-control"
-                         minlength="5" value="{{ form.direccion }}" required>
-                </div>
-                <div class="col-12 col-md-4">
-                  <label for="ciudad" class="form-label">Ciudad</label>
-                  <input type="text" name="ciudad" id="ciudad" class="form-control"
-                         value="{{ form.ciudad }}" required>
-                </div>
-                <div class="col-12 col-md-6">
-                  <label for="telefono" class="form-label">Teléfono</label>
-                  <input type="tel" name="telefono" id="telefono" class="form-control"
-                         pattern="[0-9 +()-]{7,20}" value="{{ form.telefono }}" required>
-                </div>
-                <div class="col-12">
-                  <label for="observaciones" class="form-label">Observaciones (opcional)</label>
-                  <textarea name="observaciones" id="observaciones" rows="2"
-                            class="form-control">{{ form.observaciones }}</textarea>
-                </div>
-                <div class="col-12">
-                  <button type="submit" class="btn btn-primary btn-lg w-100">Comprar</button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
+  <div class="col-12 col-md-6">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+      <span class="badge rounded-pill tg-chip-soft px-3 py-2"><i class="bi bi-tag-fill me-1"></i>{{ producto.categoria }}</span>
+      {% if producto.stock <= 0 %}
+        <span class="badge rounded-pill text-bg-danger px-3 py-2"><i class="bi bi-x-circle me-1"></i>Agotado</span>
+      {% elif producto.stock <= 5 %}
+        <span class="badge rounded-pill text-bg-warning px-3 py-2"><i class="bi bi-lightning-charge-fill me-1"></i>Quedan {{ producto.stock }}</span>
       {% else %}
-        <div class="alert alert-info mt-3">
-          Para comprar necesitas una cuenta.
-          <a href="{% url 'login' %}" class="alert-link">Inicia sesión</a> o
-          <a href="{% url 'registro' %}" class="alert-link">regístrate</a>.
-        </div>
+        <span class="badge rounded-pill text-bg-success px-3 py-2"><i class="bi bi-check-circle-fill me-1"></i>{{ producto.stock }} disponibles</span>
       {% endif %}
+    </div>
+
+    <h1 class="h2 mb-3">{{ producto.nombre }}</h1>
+    <div class="tg-price display-5 mb-3">${{ producto.precio|floatformat:"0g" }}</div>
+    <p class="text-body-secondary">{{ producto.descripcion|default:"Sin descripción." }}</p>
+
+    <ul class="list-unstyled d-grid gap-2 my-4 small">
+      <li><i class="bi bi-truck text-primary me-2"></i>Envío a la dirección que indiques</li>
+      <li><i class="bi bi-lightning-charge text-primary me-2"></i>Compra directa, sin carrito</li>
+      <li><i class="bi bi-receipt text-primary me-2"></i>Sigue el estado en Mis pedidos</li>
+    </ul>
+
+    {% if producto.stock <= 0 %}
+      <button type="button" class="btn btn-secondary btn-lg w-100" disabled>
+        <i class="bi bi-x-circle me-2"></i>Producto agotado
+      </button>
+    {% elif request.session.token %}
+      <button type="button" class="btn btn-primary btn-lg w-100" data-bs-toggle="modal" data-bs-target="#modalCompra">
+        <i class="bi bi-bag-check me-2"></i>Comprar
+      </button>
+    {% else %}
+      <a href="{% url 'login' %}" class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right me-2"></i>Inicia sesión para comprar</a>
+      <p class="text-center small text-body-secondary mt-2 mb-0">
+        ¿No tienes cuenta? <a href="{% url 'registro' %}" class="fw-semibold">Créala aquí</a>
+      </p>
     {% endif %}
   </div>
 </div>
 
+{% if producto.stock > 0 and request.session.token %}
+<!-- Ventana de compra: se abre al pulsar "Comprar" -->
+<div class="modal fade" id="modalCompra" tabindex="-1" aria-labelledby="modalCompraLabel"
+     aria-hidden="true" data-abrir="{{ abrir_modal|yesno:'1,0' }}">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+    <div class="modal-content">
+      <form method="post" action="{% url 'comprar' producto.id %}" id="form-compra">
+        {% csrf_token %}
+        <div class="modal-header border-0 pb-0">
+          <div class="d-flex align-items-center gap-3">
+            <div class="tg-icon-box"><i class="bi bi-bag-check"></i></div>
+            <h2 class="modal-title h5 mb-0" id="modalCompraLabel">Confirmar pedido</h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+
+        <div class="modal-body">
+          {% if error_compra %}
+            <div class="alert alert-danger d-flex gap-2" role="alert">
+              <i class="bi bi-exclamation-triangle-fill mt-1"></i><div>{{ error_compra }}</div>
+            </div>
+          {% endif %}
+
+          <div class="tg-info mb-4 justify-content-between">
+            <div>
+              <div class="fw-semibold">{{ producto.nombre }}</div>
+              <small class="text-body-secondary">${{ producto.precio|floatformat:"0g" }} c/u, {{ producto.stock }} disponibles</small>
+            </div>
+            <div class="text-end">
+              <small class="text-body-secondary d-block">Total</small>
+              <strong class="tg-price fs-4" id="total">${{ producto.precio|floatformat:"0g" }}</strong>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12 col-sm-5">
+              <label for="cantidad" class="form-label">Cantidad</label>
+              <div class="input-group">
+                <button class="btn btn-outline-secondary" type="button" id="menos" aria-label="Restar una unidad"><i class="bi bi-dash-lg"></i></button>
+                <input type="number" name="cantidad" id="cantidad" class="form-control text-center"
+                       min="1" max="{{ producto.stock }}" step="1"
+                       value="{{ form.cantidad|default:1 }}"
+                       data-precio="{{ producto.precio|stringformat:'f' }}" required>
+                <button class="btn btn-outline-secondary" type="button" id="mas" aria-label="Sumar una unidad"><i class="bi bi-plus-lg"></i></button>
+              </div>
+              <div class="form-text">Máximo {{ producto.stock }}.</div>
+            </div>
+            <div class="col-12 col-sm-7">
+              <label for="telefono" class="form-label">Teléfono</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                <input type="tel" name="telefono" id="telefono" class="form-control"
+                       pattern="[0-9 +\(\)\-]{7,20}" maxlength="20" value="{{ form.telefono }}"
+                       placeholder="300 123 4567" required>
+              </div>
+            </div>
+            <div class="col-12 col-sm-8">
+              <label for="direccion" class="form-label">Dirección de envío</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                <input type="text" name="direccion" id="direccion" class="form-control"
+                       minlength="5" maxlength="150" value="{{ form.direccion }}"
+                       placeholder="Calle 10 # 5-20, apto 301" required>
+              </div>
+            </div>
+            <div class="col-12 col-sm-4">
+              <label for="ciudad" class="form-label">Ciudad</label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-building"></i></span>
+                <input type="text" name="ciudad" id="ciudad" class="form-control"
+                       maxlength="60" value="{{ form.ciudad }}" required>
+              </div>
+            </div>
+            <div class="col-12">
+              <label for="observaciones" class="form-label">Observaciones <span class="text-body-secondary fw-normal">(opcional)</span></label>
+              <textarea name="observaciones" id="observaciones" rows="2" maxlength="250"
+                        class="form-control" placeholder="Indicaciones para la entrega">{{ form.observaciones }}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary px-4" id="btn-confirmar">
+            <i class="bi bi-check2-circle me-1"></i>Confirmar pedido
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if producto.stock > 0 and request.session.token %}
 <script>
-  // Total en vivo según la cantidad
+  const modalEl = document.getElementById("modalCompra");
+  const form = document.getElementById("form-compra");
   const cant = document.getElementById("cantidad");
   const total = document.getElementById("total");
-  if (cant && total) {
-    const precio = parseFloat(cant.dataset.precio);
-    const actualizar = () => {
-      const n = Math.max(1, parseInt(cant.value) || 1);
-      total.textContent = "$" + (precio * n).toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-    };
-    cant.addEventListener("input", actualizar);
-    actualizar(); // calcula también al cargar (por si el formulario vuelve con una cantidad)
+  const boton = document.getElementById("btn-confirmar");
+
+  // Si el servidor devolvió un error, la ventana se abre sola con los datos escritos
+  if (modalEl.dataset.abrir === "1") {
+    new bootstrap.Modal(modalEl).show();
   }
+
+  // Total en vivo según la cantidad
+  const precio = parseFloat(cant.dataset.precio);
+  const max = parseInt(cant.max, 10);
+  const actualizar = () => {
+    let n = parseInt(cant.value, 10);
+    if (isNaN(n) || n < 1) n = 1;
+    if (n > max) n = max;
+    total.textContent = "$" + (precio * n).toLocaleString("es-CO", { maximumFractionDigits: 0 });
+  };
+  cant.addEventListener("input", actualizar);
+  document.getElementById("menos").addEventListener("click", () => { cant.stepDown(); actualizar(); });
+  document.getElementById("mas").addEventListener("click", () => { cant.stepUp(); actualizar(); });
+  actualizar();
+
+  // Evita pedidos duplicados por doble clic: se bloquea el botón al enviar
+  const textoOriginal = boton.innerHTML;
+  form.addEventListener("submit", () => {
+    boton.disabled = true;
+    boton.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Procesando';
+  });
+  // Si el usuario vuelve con la flecha "atrás", se reactiva el botón
+  window.addEventListener("pageshow", () => {
+    boton.disabled = false;
+    boton.innerHTML = textoOriginal;
+  });
 </script>
+{% endif %}
 {% endblock %}

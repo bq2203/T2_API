@@ -1,57 +1,78 @@
 {% extends "tienda/base.html" %}
 {% block titulo %}Catálogo · TechGear{% endblock %}
 {% block contenido %}
-<h1 class="h2 mb-4">Catálogo</h1>
 
-<form method="get" class="row g-2 mb-4">
-  <div class="col-12 col-md">
-    <input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar producto…">
+<section class="tg-hero tg-grid rounded-4 p-4 p-md-5 mb-4">
+  <i class="bi bi-keyboard tg-hero-icon d-none d-md-block" aria-hidden="true"></i>
+  <div class="row">
+    <div class="col-lg-7 position-relative">
+      <h1 class="display-6 mb-2">Periféricos para jugar y trabajar</h1>
+      <p class="mb-4 text-white-50">Teclados, mouse y más. Elige un producto, compra directo y sigue tu pedido.</p>
+      <form method="get" role="search">
+        {% if categoria_activa %}<input type="hidden" name="categoria" value="{{ categoria_activa }}">{% endif %}
+        <div class="input-group input-group-lg">
+          <span class="input-group-text border-0 bg-white"><i class="bi bi-search"></i></span>
+          <input type="search" name="q" value="{{ q }}" class="form-control border-0" placeholder="Buscar por nombre o descripción" aria-label="Buscar producto">
+          <button class="btn btn-primary px-4" type="submit">Buscar</button>
+        </div>
+      </form>
+    </div>
   </div>
-  <div class="col-12 col-md-4">
-    <select name="categoria" class="form-select" onchange="this.form.submit()">
-      <option value="">Todas las categorías</option>
-      {% for c in categorias %}
-        <option value="{{ c }}" {% if c == categoria_activa %}selected{% endif %}>{{ c }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div class="col-12 col-md-auto">
-    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
-  </div>
-</form>
+</section>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+  <a href="{% url 'catalogo' %}{% if q %}?q={{ q|urlencode }}{% endif %}"
+     class="btn btn-sm rounded-pill px-3 {% if not categoria_activa %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+    <i class="bi bi-grid me-1"></i>Todos
+  </a>
+  {% for c in categorias %}
+    <a href="?categoria={{ c|urlencode }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}"
+       class="btn btn-sm rounded-pill px-3 {% if c == categoria_activa %}btn-primary{% else %}btn-outline-secondary{% endif %}">{{ c }}</a>
+  {% endfor %}
+  <span class="ms-auto text-body-secondary small">{{ productos|length }} producto{{ productos|length|pluralize }}</span>
+</div>
 
 {% if productos %}
   <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 row-cols-xl-4 g-4">
     {% for p in productos %}
       <div class="col">
-        <div class="card h-100 shadow-sm">
-          <div class="ratio ratio-4x3 bg-body-secondary">
-            {% if p.imagen %}
-              <img src="{{ p.imagen }}" alt="{{ p.nombre }}" class="card-img-top object-fit-cover" loading="lazy">
-            {% else %}
-              <div class="d-flex align-items-center justify-content-center text-body-secondary">Sin foto</div>
+        <article class="card tg-card tg-product h-100 {% if p.stock <= 0 %}tg-soldout{% endif %}">
+          <div class="tg-img position-relative">
+            <div class="ratio ratio-4x3">
+              <div class="tg-img-ph"><i class="bi bi-image fs-1"></i><small>Sin imagen</small></div>
+              {% if p.imagen %}<img src="{{ p.imagen }}" alt="{{ p.nombre }}" loading="lazy" onerror="this.remove()">{% endif %}
+            </div>
+            <span class="badge rounded-pill tg-chip position-absolute top-0 start-0 m-3">{{ p.categoria }}</span>
+            {% if p.stock <= 0 %}
+              <span class="badge rounded-pill text-bg-danger position-absolute top-0 end-0 m-3"><i class="bi bi-x-circle me-1"></i>Agotado</span>
+            {% elif p.stock <= 5 %}
+              <span class="badge rounded-pill text-bg-warning position-absolute top-0 end-0 m-3"><i class="bi bi-lightning-charge-fill me-1"></i>Quedan {{ p.stock }}</span>
             {% endif %}
           </div>
-          <div class="card-body d-flex flex-column">
-            <span class="badge text-bg-primary align-self-start mb-2">{{ p.categoria }}</span>
-            <h2 class="h5 card-title">
-              <a href="{% url 'producto_detalle' p.id %}" class="text-decoration-none text-reset stretched-link">{{ p.nombre }}</a>
+
+          <div class="card-body">
+            <h2 class="h6 tg-clamp-2 mb-2">
+              <a href="{% url 'producto_detalle' p.id %}" class="text-reset text-decoration-none stretched-link">{{ p.nombre }}</a>
             </h2>
-            <p class="card-text text-body-secondary small">{{ p.descripcion|default:"Sin descripción." }}</p>
+            <p class="small text-body-secondary tg-clamp-3 mb-0">{{ p.descripcion|default:"Sin descripción." }}</p>
           </div>
-          <div class="card-footer bg-body d-flex justify-content-between align-items-center">
-            <strong class="fs-5">${{ p.precio|floatformat:2 }}</strong>
-            {% if p.stock > 0 %}
-              <span class="badge text-bg-success">{{ p.stock }} disponibles</span>
-            {% else %}
-              <span class="badge text-bg-danger">Agotado</span>
+
+          <div class="card-footer bg-transparent border-0 px-3 pb-3 pt-0 d-flex justify-content-between align-items-center">
+            <span class="tg-price fs-5">${{ p.precio|floatformat:"0g" }}</span>
+            {% if p.stock > 5 %}
+              <small class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>{{ p.stock }} disponibles</small>
             {% endif %}
           </div>
-        </div>
+        </article>
       </div>
     {% endfor %}
   </div>
 {% else %}
-  <div class="alert alert-secondary text-center">No hay productos para mostrar.</div>
+  <div class="tg-card text-center py-5 px-3">
+    <div class="tg-icon-box tg-icon-box-lg mx-auto mb-3"><i class="bi bi-search"></i></div>
+    <h2 class="h5">No hay productos con ese filtro</h2>
+    <p class="text-body-secondary">Cambia la búsqueda o elige otra categoría.</p>
+    <a href="{% url 'catalogo' %}" class="btn btn-primary"><i class="bi bi-arrow-counterclockwise me-1"></i>Ver todos los productos</a>
+  </div>
 {% endif %}
 {% endblock %}

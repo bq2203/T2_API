@@ -1,63 +1,114 @@
 {% extends "tienda/base.html" %}
 {% block titulo %}Dashboard · TechGear{% endblock %}
 {% block contenido %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-  <div>
-    <h1 class="h2 mb-1">Dashboard de productos</h1>
-    <p class="text-body-secondary mb-0">{{ productos|length }} producto{{ productos|length|pluralize }} en el catálogo</p>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <div class="tg-icon-box tg-icon-box-lg"><i class="bi bi-speedometer2"></i></div>
+    <div>
+      <h1 class="h3 mb-0">Panel de administración</h1>
+      <p class="text-body-secondary mb-0">Administra el catálogo y los pedidos.</p>
+    </div>
   </div>
-  <a href="{% url 'producto_crear' %}" class="btn btn-primary">+ Nuevo producto</a>
+  <div class="d-flex gap-2">
+    <a href="{% url 'admin_pedidos' %}" class="btn btn-outline-primary"><i class="bi bi-receipt me-2"></i>Pedidos</a>
+    <a href="{% url 'producto_crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Nuevo producto</a>
+  </div>
 </div>
 
-{% if productos %}
-  <div class="card shadow-sm">
+<div class="tg-card overflow-hidden">
+  <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+    <h2 class="h6 mb-0"><i class="bi bi-box-seam me-2"></i>Productos</h2>
+    <span class="badge rounded-pill text-bg-light border">{{ productos|length }}</span>
+  </div>
+
+  {% if productos %}
     <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
+      <table class="table table-hover align-middle mb-0 tg-table">
+        <thead>
           <tr>
-            <th scope="col">Foto</th>
-            <th scope="col">Nombre</th>
-            <th scope="col">Categoría</th>
-            <th scope="col">Precio</th>
-            <th scope="col">Stock</th>
-            <th scope="col" class="text-end">Acciones</th>
+            <th class="ps-4">Producto</th>
+            <th>Categoría</th>
+            <th class="text-end">Precio</th>
+            <th class="text-center">Stock</th>
+            <th class="text-end pe-4">Acciones</th>
           </tr>
         </thead>
         <tbody>
           {% for p in productos %}
-          <tr>
-            <td>
-              {% if p.imagen %}
-                <img src="{{ p.imagen }}" alt="{{ p.nombre }}" width="56" height="56" class="rounded object-fit-cover">
-              {% else %}
-                <span class="badge text-bg-light">Sin foto</span>
-              {% endif %}
-            </td>
-            <td>
-              <div class="fw-semibold">{{ p.nombre }}</div>
-              <div class="text-body-secondary small">{{ p.descripcion|truncatechars:60 }}</div>
-            </td>
-            <td><span class="badge text-bg-primary">{{ p.categoria }}</span></td>
-            <td>${{ p.precio|floatformat:2 }}</td>
-            <td>
-              {% if p.stock > 0 %}<span class="badge text-bg-success">{{ p.stock }}</span>
-              {% else %}<span class="badge text-bg-danger">Agotado</span>{% endif %}
-            </td>
-            <td class="text-end text-nowrap">
-              <a href="{% url 'producto_editar' p.id %}" class="btn btn-outline-primary btn-sm">Editar</a>
-              <form method="post" action="{% url 'producto_eliminar' p.id %}" class="d-inline"
-                    onsubmit="return confirm('¿Eliminar &quot;{{ p.nombre|escapejs }}&quot;? Esta acción no se puede deshacer.');">
-                {% csrf_token %}
-                <button type="submit" class="btn btn-outline-danger btn-sm">Eliminar</button>
-              </form>
-            </td>
-          </tr>
+            <tr>
+              <td class="ps-4">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="tg-thumb">
+                    <div class="tg-img-ph"><i class="bi bi-image"></i></div>
+                    {% if p.imagen %}<img src="{{ p.imagen }}" alt="" loading="lazy" onerror="this.remove()">{% endif %}
+                  </div>
+                  <span class="fw-semibold">{{ p.nombre }}</span>
+                </div>
+              </td>
+              <td><span class="badge rounded-pill tg-chip-soft">{{ p.categoria }}</span></td>
+              <td class="text-end fw-semibold">${{ p.precio|floatformat:"0g" }}</td>
+              <td class="text-center">
+                {% if p.stock <= 0 %}
+                  <span class="badge rounded-pill text-bg-danger">Agotado</span>
+                {% elif p.stock <= 5 %}
+                  <span class="badge rounded-pill text-bg-warning">{{ p.stock }}</span>
+                {% else %}
+                  <span class="badge rounded-pill text-bg-success">{{ p.stock }}</span>
+                {% endif %}
+              </td>
+              <td class="text-end pe-4 text-nowrap">
+                <a href="{% url 'producto_editar' p.id %}" class="btn btn-sm btn-outline-primary" title="Editar" aria-label="Editar {{ p.nombre }}">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                <button type="button" class="btn btn-sm btn-outline-danger" title="Eliminar" aria-label="Eliminar {{ p.nombre }}"
+                        data-bs-toggle="modal" data-bs-target="#modalEliminar"
+                        data-nombre="{{ p.nombre }}" data-action="{% url 'producto_eliminar' p.id %}">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </td>
+            </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+  {% else %}
+    <div class="text-center py-5 px-3">
+      <div class="tg-icon-box tg-icon-box-lg mx-auto mb-3"><i class="bi bi-box-seam"></i></div>
+      <h2 class="h5">Aún no hay productos</h2>
+      <p class="text-body-secondary">Crea el primero para que aparezca en el catálogo.</p>
+      <a href="{% url 'producto_crear' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Nuevo producto</a>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Confirmación para eliminar -->
+<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <form method="post" id="form-eliminar">
+        {% csrf_token %}
+        <div class="modal-body text-center p-4">
+          <div class="tg-icon-box tg-icon-box-lg tg-icon-danger mx-auto mb-3"><i class="bi bi-trash3"></i></div>
+          <h2 class="h5" id="modalEliminarLabel">¿Eliminar producto?</h2>
+          <p class="text-body-secondary mb-0">Se eliminará <strong id="nombre-eliminar"></strong>. No se puede deshacer.</p>
+        </div>
+        <div class="modal-footer border-0 justify-content-center pt-0 pb-4 gap-2">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash3 me-1"></i>Eliminar</button>
+        </div>
+      </form>
+    </div>
   </div>
-{% else %}
-  <div class="alert alert-secondary text-center">Aún no hay productos. Crea el primero con “Nuevo producto”.</div>
-{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const modalEliminar = document.getElementById("modalEliminar");
+  modalEliminar.addEventListener("show.bs.modal", (e) => {
+    const b = e.relatedTarget;
+    document.getElementById("form-eliminar").action = b.dataset.action;
+    document.getElementById("nombre-eliminar").textContent = b.dataset.nombre;
+  });
+</script>
 {% endblock %}

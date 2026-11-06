@@ -2,26 +2,41 @@
 {% block titulo %}Iniciar sesión · TechGear{% endblock %}
 {% block contenido %}
 <div class="row justify-content-center">
-  <div class="col-12 col-sm-10 col-md-6 col-lg-4">
-    <div class="card shadow-sm">
-      <div class="card-body p-4">
-        <h1 class="h3 mb-4 text-center">Iniciar sesión</h1>
-        <form method="post">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" id="email" name="email" value="{{ email }}" class="form-control" required autofocus>
-          </div>
-          <div class="mb-3">
-            <label for="password" class="form-label">Contraseña</label>
-            <input type="password" id="password" name="password" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-100">Entrar</button>
-        </form>
-        <p class="text-center text-body-secondary small mt-3 mb-0">
-          ¿No tienes cuenta? <a href="{% url 'registro' %}">Regístrate</a>
-        </p>
+  <div class="col-12 col-sm-10 col-md-7 col-lg-5 col-xl-4">
+    <div class="tg-card p-4 p-md-5">
+      <div class="text-center mb-4">
+        <div class="tg-icon-box tg-icon-box-lg mx-auto mb-3"><i class="bi bi-person-circle"></i></div>
+        <h1 class="h4 mb-1">Inicia sesión</h1>
+        <p class="text-body-secondary small mb-0">Entra para comprar y ver tus pedidos.</p>
       </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label for="email" class="form-label">Correo electrónico</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input type="email" name="email" id="email" class="form-control" value="{{ email }}"
+                   placeholder="tu@correo.com" autocomplete="email" required autofocus>
+          </div>
+        </div>
+        <div class="mb-4">
+          <label for="password" class="form-label">Contraseña</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" id="password" class="form-control"
+                   autocomplete="current-password" required>
+            <button type="button" class="btn btn-outline-secondary" data-toggle-pass="#password" aria-label="Mostrar u ocultar contraseña">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-100"><i class="bi bi-box-arrow-in-right me-2"></i>Entrar</button>
+      </form>
+
+      <p class="text-center small text-body-secondary mt-4 mb-0">
+        ¿Aún no tienes cuenta? <a href="{% url 'registro' %}" class="fw-semibold">Crea una cuenta</a>
+      </p>
     </div>
   </div>
 </div>

@@ -112,21 +112,33 @@ EXT_PERMITIDAS = {".jpg", ".jpeg", ".png", ".webp"}
 MAX_FOTO_MB = 2
 
 
+import requests
+from django.conf import settings
+
+
 def _guardar_foto(archivo):
-    """Valida y guarda la foto. Devuelve (url, error)."""
+    """Valida la foto y la sube a Cloudinary. Devuelve (url, error)."""
     ext = Path(archivo.name).suffix.lower()
     if ext not in EXT_PERMITIDAS:
         return None, "La foto debe ser JPG, PNG o WEBP."
     if archivo.size > MAX_FOTO_MB * 1024 * 1024:
         return None, f"La foto no puede pesar más de {MAX_FOTO_MB} MB."
-    nombre = default_storage.save(f"productos/{uuid.uuid4().hex}{ext}", archivo)
-    return default_storage.url(nombre), None    
+    if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_UPLOAD_PRESET:
+        return None, "El almacenamiento de imágenes no está configurado."
+    try:
+        resp = requests.post(
+            f"https://api.cloudinary.com/v1_1/{settings.CLOUDINARY_CLOUD_NAME}/image/upload",
+            data={"upload_preset": settings.CLOUDINARY_UPLOAD_PRESET, "folder": "techgear"},
+            files={"file": (archivo.name, archivo.read(), archivo.content_type)},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()["secure_url"], None
+    except (requests.RequestException, KeyError, ValueError):
+        return None, "No se pudo subir la foto. Intenta de nuevo."  
 
-# =====================================================================
 # DASHBOARD ADMIN (CRUD de productos)
-# El navegador solo sabe enviar GET y POST desde un <form>; Django recibe
-# esos POST y los traduce a POST / PUT / DELETE hacia la API de FastAPI.
-# =====================================================================
+
 CAMPOS_PRODUCTO = ("nombre", "descripcion", "categoria", "precio", "stock")
 
 

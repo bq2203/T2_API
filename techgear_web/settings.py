@@ -143,3 +143,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # La sesión (con el JWT) viaja firmada en la cookie.
 SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
 CSRF_TRUSTED_ORIGINS = ['https://*.vercel.app']
+
+CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME", "vwn5yl0t")
+CLOUDINARY_UPLOAD_PRESET = os.getenv("CLOUDINARY_UPLOAD_PRESET", "techgear_unsigned")

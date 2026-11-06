@@ -2,22 +2,42 @@
 {% block titulo %}Mi perfil · TechGear{% endblock %}
 {% block contenido %}
 <div class="row justify-content-center">
-  <div class="col-12 col-md-8 col-lg-6">
-    <div class="card shadow-sm">
-      <div class="card-header bg-body"><h1 class="h4 mb-0">Mi perfil</h1></div>
-      <div class="card-body">
-        <dl class="row mb-0">
-          <dt class="col-sm-3">Nombre</dt><dd class="col-sm-9">{{ perfil.nombre }}</dd>
-          <dt class="col-sm-3">Email</dt><dd class="col-sm-9">{{ perfil.email }}</dd>
-          <dt class="col-sm-3">Rol</dt>
-          <dd class="col-sm-9">
-            <span class="badge {% if perfil.rol == 'admin' %}text-bg-primary{% else %}text-bg-secondary{% endif %}">{{ perfil.rol }}</span>
-          </dd>
-          <dt class="col-sm-3">ID</dt><dd class="col-sm-9 text-break"><code>{{ perfil.id }}</code></dd>
-        </dl>
-      </div>
-      <div class="card-footer bg-body text-body-secondary small">
-        Datos obtenidos de la API con tu JWT (<code>GET /usuarios/me</code>).
+  <div class="col-12 col-md-9 col-lg-6">
+    <div class="tg-card overflow-hidden">
+      <div class="tg-profile-banner tg-grid"></div>
+      <div class="px-4 pb-4 text-center">
+        <div class="tg-avatar tg-avatar-xl mx-auto" style="margin-top:-48px">{{ perfil.nombre|slice:":1"|upper }}</div>
+        <h1 class="h4 mt-3 mb-2">{{ perfil.nombre }}</h1>
+        {% if perfil.rol == "admin" %}
+          <span class="badge rounded-pill text-bg-primary"><i class="bi bi-shield-check me-1"></i>Administrador</span>
+        {% else %}
+          <span class="badge rounded-pill text-bg-secondary"><i class="bi bi-person-check me-1"></i>Cliente</span>
+        {% endif %}
+
+        <div class="d-grid gap-2 text-start my-4">
+          <div class="tg-info">
+            <div class="tg-icon-box"><i class="bi bi-person"></i></div>
+            <div><small class="text-body-secondary d-block">Nombre</small><span class="fw-semibold">{{ perfil.nombre }}</span></div>
+          </div>
+          <div class="tg-info">
+            <div class="tg-icon-box"><i class="bi bi-envelope"></i></div>
+            <div class="text-break"><small class="text-body-secondary d-block">Correo</small><span class="fw-semibold">{{ perfil.email }}</span></div>
+          </div>
+          <div class="tg-info">
+            <div class="tg-icon-box"><i class="bi bi-shield-lock"></i></div>
+            <div><small class="text-body-secondary d-block">Tipo de cuenta</small><span class="fw-semibold">{% if perfil.rol == "admin" %}Administrador{% else %}Cliente{% endif %}</span></div>
+          </div>
+        </div>
+
+        <div class="d-grid d-sm-flex gap-2 justify-content-center">
+          {% if perfil.rol == "admin" %}
+            <a href="{% url 'dashboard' %}" class="btn btn-primary"><i class="bi bi-speedometer2 me-2"></i>Ir al dashboard</a>
+            <a href="{% url 'admin_pedidos' %}" class="btn btn-outline-primary"><i class="bi bi-receipt me-2"></i>Ver pedidos</a>
+          {% else %}
+            <a href="{% url 'mis_pedidos' %}" class="btn btn-primary"><i class="bi bi-bag-check me-2"></i>Mis pedidos</a>
+            <a href="{% url 'catalogo' %}" class="btn btn-outline-primary"><i class="bi bi-grid me-2"></i>Ir al catálogo</a>
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>

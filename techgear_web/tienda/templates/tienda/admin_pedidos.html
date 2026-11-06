@@ -1,69 +1,107 @@
 {% extends "tienda/base.html" %}
-{% block titulo %}Pedidos · Dashboard · TechGear{% endblock %}
+{% block titulo %}Pedidos · TechGear{% endblock %}
 {% block contenido %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h1 class="h2 mb-0">Pedidos</h1>
-  <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-sm">Volver al dashboard</a>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div class="d-flex align-items-center gap-3">
+    <div class="tg-icon-box tg-icon-box-lg"><i class="bi bi-receipt"></i></div>
+    <div>
+      <h1 class="h3 mb-0">Pedidos</h1>
+      <p class="text-body-secondary mb-0">Revisa los envíos y actualiza su estado.</p>
+    </div>
+  </div>
+  <a href="{% url 'dashboard' %}" class="btn btn-outline-primary"><i class="bi bi-speedometer2 me-2"></i>Volver al dashboard</a>
 </div>
 
 {% if pedidos %}
+  <div class="d-flex flex-wrap gap-2 mb-4" role="group" aria-label="Filtrar por estado">
+    <button type="button" class="btn btn-sm rounded-pill px-3 btn-primary" data-filtro="todos">Todos <span class="n">0</span></button>
+    <button type="button" class="btn btn-sm rounded-pill px-3 btn-outline-secondary" data-filtro="pendiente">Pendientes <span class="n">0</span></button>
+    <button type="button" class="btn btn-sm rounded-pill px-3 btn-outline-secondary" data-filtro="enviado">Enviados <span class="n">0</span></button>
+    <button type="button" class="btn btn-sm rounded-pill px-3 btn-outline-secondary" data-filtro="entregado">Entregados <span class="n">0</span></button>
+    <button type="button" class="btn btn-sm rounded-pill px-3 btn-outline-secondary" data-filtro="cancelado">Cancelados <span class="n">0</span></button>
+  </div>
+
   <div class="row g-3">
     {% for p in pedidos %}
-      <div class="col-12">
-        <div class="card shadow-sm">
-          <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <div>
-              <strong>{{ p.cliente|default:"Cliente" }}</strong>
-              <span class="text-body-secondary small ms-2">{{ p.fecha|slice:":16"|cut:"T" }}</span>
+      <div class="col-12" data-estado="{{ p.estado }}">
+        <article class="tg-card overflow-hidden">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 px-4 py-3 border-bottom bg-light">
+            <div class="d-flex align-items-center gap-3">
+              <span class="tg-avatar tg-avatar-md">{{ p.cliente|default:"C"|slice:":1"|upper }}</span>
+              <div>
+                <div class="fw-semibold">{{ p.cliente|default:"Cliente" }}</div>
+                <small class="text-body-secondary">Pedido #{{ p.id|slice:"-6:"|upper }}, {{ p.fecha|slice:":16"|cut:"T" }}</small>
+              </div>
             </div>
-            {% if p.estado == "pendiente" %}
-              <span class="badge text-bg-warning">Pendiente</span>
-            {% elif p.estado == "enviado" %}
-              <span class="badge text-bg-info">Enviado</span>
-            {% elif p.estado == "entregado" %}
-              <span class="badge text-bg-success">Entregado</span>
-            {% elif p.estado == "cancelado" %}
-              <span class="badge text-bg-danger">Cancelado</span>
-            {% else %}
-              <span class="badge text-bg-secondary">{{ p.estado }}</span>
-            {% endif %}
+            {% include "tienda/_estado_badge.html" with estado=p.estado %}
           </div>
-          <div class="card-body">
+
+          <div class="px-4 py-3">
             {% for it in p.items %}
-              <div class="d-flex justify-content-between">
-                <span>{{ it.nombre|default:"Producto" }} × {{ it.cantidad }}</span>
-                {% if it.precio_unitario %}<span>${{ it.precio_unitario|floatformat:2 }} c/u</span>{% endif %}
+              <div class="d-flex justify-content-between align-items-center py-1">
+                <span><i class="bi bi-box-seam text-primary me-2"></i>{{ it.nombre|default:"Producto" }} <span class="text-body-secondary">x {{ it.cantidad }}</span></span>
+                {% if it.precio_unitario %}<span class="text-body-secondary small">${{ it.precio_unitario|floatformat:"0g" }} c/u</span>{% endif %}
               </div>
             {% endfor %}
             {% if p.envio %}
-              <hr>
-              <small class="text-body-secondary">
-                {{ p.envio.direccion }}, {{ p.envio.ciudad }} · Tel: {{ p.envio.telefono }}
-                {% if p.envio.observaciones %}<br><em>{{ p.envio.observaciones }}</em>{% endif %}
-              </small>
+              <div class="tg-info mt-3">
+                <i class="bi bi-geo-alt text-primary fs-5"></i>
+                <small class="text-body-secondary">
+                  {{ p.envio.direccion }}, {{ p.envio.ciudad }}. Tel. {{ p.envio.telefono }}
+                  {% if p.envio.observaciones %}<br><em>{{ p.envio.observaciones }}</em>{% endif %}
+                </small>
+              </div>
             {% endif %}
           </div>
-          <div class="card-footer bg-body d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <span>Total: <strong class="fs-5">${{ p.total|floatformat:2 }}</strong></span>
+
+          <div class="px-4 py-3 border-top d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <span>Total <strong class="tg-price fs-5 ms-1">${{ p.total|floatformat:"0g" }}</strong></span>
             {% if p.estado != "cancelado" %}
               <form method="post" action="{% url 'admin_pedido_estado' p.id %}" class="d-flex gap-2">
                 {% csrf_token %}
-                <select name="estado" class="form-select form-select-sm">
+                <select name="estado" class="form-select form-select-sm" aria-label="Estado del pedido">
                   {% for e in estados %}
                     <option value="{{ e }}" {% if e == p.estado %}selected{% endif %}>{{ e|capfirst }}</option>
                   {% endfor %}
                 </select>
-                <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+                <button type="submit" class="btn btn-primary btn-sm text-nowrap"><i class="bi bi-check2 me-1"></i>Guardar</button>
               </form>
             {% else %}
-              <small class="text-body-secondary">Cancelado (stock devuelto)</small>
+              <small class="text-body-secondary"><i class="bi bi-arrow-counterclockwise me-1"></i>Cancelado, el stock ya se devolvió</small>
             {% endif %}
           </div>
-        </div>
+        </article>
       </div>
     {% endfor %}
   </div>
 {% else %}
-  <div class="alert alert-secondary text-center">Todavía no hay pedidos.</div>
+  <div class="tg-card text-center py-5 px-3">
+    <div class="tg-icon-box tg-icon-box-lg mx-auto mb-3"><i class="bi bi-receipt"></i></div>
+    <h2 class="h5">Todavía no hay pedidos</h2>
+    <p class="text-body-secondary mb-0">Cuando un cliente compre, aparecerá aquí.</p>
+  </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const filtros = document.querySelectorAll("[data-filtro]");
+  const tarjetas = document.querySelectorAll("[data-estado]");
+
+  function aplicar(f) {
+    tarjetas.forEach((t) => t.classList.toggle("d-none", f !== "todos" && t.dataset.estado !== f));
+    filtros.forEach((b) => {
+      const activo = b.dataset.filtro === f;
+      b.classList.toggle("btn-primary", activo);
+      b.classList.toggle("btn-outline-secondary", !activo);
+    });
+  }
+
+  filtros.forEach((b) => {
+    const f = b.dataset.filtro;
+    const n = f === "todos" ? tarjetas.length : Array.from(tarjetas).filter((t) => t.dataset.estado === f).length;
+    b.querySelector(".n").textContent = n;
+    b.addEventListener("click", () => aplicar(f));
+  });
+</script>
 {% endblock %}
