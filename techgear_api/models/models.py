@@ -1,6 +1,6 @@
 """Esquemas Pydantic de TechGear."""
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -12,13 +12,7 @@ class ProductoBase(BaseModel):
     categoria: str
     precio: float = Field(..., gt=0)
     stock: int = Field(..., ge=0)
-    imagen: str = ""                      
-
-
-class ProductoUpdate(BaseModel):
-    ...
-    stock: Optional[int] = Field(None, ge=0)
-    imagen: Optional[str] = None           
+    imagen: str = ""
 
 
 class ProductoCreate(ProductoBase):
@@ -32,6 +26,7 @@ class ProductoUpdate(BaseModel):
     categoria: Optional[str] = None
     precio: Optional[float] = Field(None, gt=0)
     stock: Optional[int] = Field(None, ge=0)
+    imagen: Optional[str] = None  # antes faltaba: por eso la foto no se actualizaba al editar
 
 
 class ProductoOut(ProductoBase):
@@ -39,21 +34,43 @@ class ProductoOut(ProductoBase):
     id: str
 
 
-# ---------- Pedidos (crear y ver) ----------
+# ---------- Pedidos ----------
 class ItemPedido(BaseModel):
     producto_id: str
     cantidad: int = Field(..., gt=0)
 
 
+class DatosEnvio(BaseModel):
+    direccion: str = Field(..., min_length=5)
+    ciudad: str = Field(..., min_length=2)
+    telefono: str = Field(..., min_length=7, max_length=15)
+    observaciones: str = ""
+
+
 class PedidoCreate(BaseModel):
-    """POST: lo único que envía el cliente."""
-    cliente: str = Field(..., min_length=2)
+    """POST: lo único que envía el cliente (el usuario sale del token)."""
     items: List[ItemPedido] = Field(..., min_length=1)
+    envio: DatosEnvio
 
 
-class PedidoOut(PedidoCreate):
-    """GET / respuestas: pedido con los campos que calcula el servidor."""
+class EstadoPedido(BaseModel):
+    """PUT /pedidos/{id}/estado (solo admin)."""
+    estado: Literal["pendiente", "enviado", "entregado", "cancelado"]
+
+
+class ItemPedidoOut(ItemPedido):
+    nombre: str = ""
+    precio_unitario: float = 0.0
+
+
+class PedidoOut(BaseModel):
+    """Respuestas: pedido con lo que calcula el servidor.
+    Los campos nuevos son opcionales para que los pedidos viejos no rompan el GET."""
     id: str
+    usuario_id: str = ""
+    cliente: str = ""
+    items: List[ItemPedidoOut]
+    envio: Optional[DatosEnvio] = None
     total: float
     estado: str
     fecha: datetime

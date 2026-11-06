@@ -34,7 +34,9 @@
           </div>
           <div class="card-body d-flex flex-column">
             <span class="badge text-bg-primary align-self-start mb-2">{{ p.categoria }}</span>
-            <h2 class="h5 card-title">{{ p.nombre }}</h2>
+            <h2 class="h5 card-title">
+              <a href="{% url 'producto_detalle' p.id %}" class="text-decoration-none text-reset stretched-link">{{ p.nombre }}</a>
+            </h2>
             <p class="card-text text-body-secondary small">{{ p.descripcion|default:"Sin descripción." }}</p>
           </div>
           <div class="card-footer bg-body d-flex justify-content-between align-items-center">

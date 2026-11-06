@@ -71,3 +71,24 @@ def actualizar_producto(token, producto_id, datos):
 
 def eliminar_producto(token, producto_id):
     return llamar("DELETE", f"/productos/{producto_id}", token=token)
+
+
+def crear_pedido(token, producto_id, cantidad, envio):
+    return llamar(
+        "POST", "/pedidos", token=token,
+        json={
+            "items": [{"producto_id": producto_id, "cantidad": cantidad}],
+            "envio": envio,
+        },
+    )
+
+
+def mis_pedidos(token):
+    return llamar("GET", "/pedidos/mios", token=token)
+
+def listar_pedidos(token):
+    return llamar("GET", "/pedidos", token=token)
+
+
+def cambiar_estado_pedido(token, pedido_id, estado):
+    return llamar("PUT", f"/pedidos/{pedido_id}/estado", token=token, json={"estado": estado})

@@ -1,0 +1,51 @@
+{% extends "tienda/base.html" %}
+{% block titulo %}Mis pedidos · TechGear{% endblock %}
+{% block contenido %}
+<h1 class="h2 mb-4">Mis pedidos</h1>
+
+{% if pedidos %}
+  <div class="row g-3">
+    {% for p in pedidos %}
+      <div class="col-12">
+        <div class="card shadow-sm">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="text-body-secondary small">{{ p.fecha|slice:":16"|cut:"T" }}</span>
+            {% if p.estado == "pendiente" %}
+              <span class="badge text-bg-warning">Pendiente</span>
+            {% elif p.estado == "enviado" %}
+              <span class="badge text-bg-info">Enviado</span>
+            {% elif p.estado == "entregado" %}
+              <span class="badge text-bg-success">Entregado</span>
+            {% elif p.estado == "cancelado" %}
+              <span class="badge text-bg-danger">Cancelado</span>
+            {% else %}
+              <span class="badge text-bg-secondary">{{ p.estado|capfirst }}</span>
+            {% endif %}
+          </div>
+          <div class="card-body">
+            {% for it in p.items %}
+              <div class="d-flex justify-content-between">
+                <span>{{ it.nombre|default:"Producto" }} × {{ it.cantidad }}</span>
+                {% if it.precio_unitario %}<span>${{ it.precio_unitario|floatformat:2 }} c/u</span>{% endif %}
+              </div>
+            {% endfor %}
+            {% if p.envio %}
+              <hr>
+              <small class="text-body-secondary">
+                Envío a {{ p.envio.direccion }}, {{ p.envio.ciudad }} · Tel: {{ p.envio.telefono }}
+              </small>
+            {% endif %}
+          </div>
+          <div class="card-footer bg-body text-end">
+            Total: <strong class="fs-5">${{ p.total|floatformat:2 }}</strong>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="alert alert-secondary text-center">
+    Aún no has hecho pedidos. <a href="{% url 'catalogo' %}" class="alert-link">Ir al catálogo</a>
+  </div>
+{% endif %}
+{% endblock %}

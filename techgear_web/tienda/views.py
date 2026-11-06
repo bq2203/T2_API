@@ -263,3 +263,137 @@ def producto_eliminar(request, producto_id):
     else:
         messages.success(request, "Producto eliminado.")
     return redirect("dashboard")
+
+
+# ---------- Detalle del producto y compra directa ----------
+CAMPOS_ENVIO = ("direccion", "ciudad", "telefono", "observaciones")
+
+
+def producto_detalle(request, producto_id):
+    try:
+        producto = servicios.obtener_producto(producto_id)
+    except ErrorAPI as e:
+        messages.error(request, e.mensaje)
+        return redirect("catalogo")
+    return render(request, "tienda/producto_detalle.html", {"producto": producto, "form": {}})
+
+
+@login_requerido
+@require_POST
+def comprar(request, producto_id):
+    try:
+        producto = servicios.obtener_producto(producto_id)
+    except ErrorAPI as e:
+        messages.error(request, e.mensaje)
+        return redirect("catalogo")
+
+    form = {c: request.POST.get(c, "").strip() for c in CAMPOS_ENVIO}
+    form["cantidad"] = request.POST.get("cantidad", "").strip()
+
+    def volver(error):
+        messages.error(request, error)
+        return render(request, "tienda/producto_detalle.html", {"producto": producto, "form": form})
+
+    # Validaciones antes de llamar a la API (la API vuelve a validar el stock)
+    try:
+        cantidad = int(form["cantidad"])
+    except ValueError:
+        return volver("La cantidad debe ser un número entero.")
+    if cantidad < 1:
+        return volver("La cantidad mínima es 1.")
+    if cantidad > producto["stock"]:
+        return volver(f"Solo hay {producto['stock']} unidades disponibles.")
+    if len(form["direccion"]) < 5:
+        return volver("Escribe una dirección válida (mínimo 5 caracteres).")
+    if len(form["ciudad"]) < 2:
+        return volver("Escribe la ciudad.")
+    telefono = "".join(ch for ch in form["telefono"] if ch.isdigit())
+    if not 7 <= len(telefono) <= 15:
+        return volver("El teléfono debe tener entre 7 y 15 dígitos.")
+
+    envio = {
+        "direccion": form["direccion"],
+        "ciudad": form["ciudad"],
+        "telefono": telefono,
+        "observaciones": form["observaciones"],
+    }
+    try:
+        pedido = servicios.crear_pedido(request.session["token"], producto_id, cantidad, envio)
+    except ErrorAPI as e:
+        respuesta = _sesion_expirada(request, e)
+        if respuesta:
+            return respuesta
+        return volver(e.mensaje)
+
+    request.session["ultimo_pedido"] = pedido["id"]
+    return redirect("pedido_confirmacion")
+
+
+@login_requerido
+def pedido_confirmacion(request):
+    pedido_id = request.session.pop("ultimo_pedido", None)
+    if not pedido_id:
+        return redirect("mis_pedidos")
+    try:
+        pedidos = servicios.mis_pedidos(request.session["token"])
+    except ErrorAPI as e:
+        respuesta = _sesion_expirada(request, e)
+        if respuesta:
+            return respuesta
+        messages.error(request, e.mensaje)
+        return redirect("mis_pedidos")
+    pedido = next((p for p in pedidos if p["id"] == pedido_id), None)
+    if not pedido:
+        return redirect("mis_pedidos")
+    return render(request, "tienda/pedido_confirmacion.html", {"pedido": pedido})
+
+
+@login_requerido
+def mis_pedidos(request):
+    try:
+        pedidos = servicios.mis_pedidos(request.session["token"])
+    except ErrorAPI as e:
+        respuesta = _sesion_expirada(request, e)
+        if respuesta:
+            return respuesta
+        messages.error(request, e.mensaje)
+        pedidos = []
+    return render(request, "tienda/mis_pedidos.html", {"pedidos": pedidos})
+
+# ---------- Admin: pedidos ----------
+ESTADOS_PEDIDO = ("pendiente", "enviado", "entregado", "cancelado")
+
+
+@admin_requerido
+def admin_pedidos(request):
+    try:
+        pedidos = servicios.listar_pedidos(request.session["token"])
+    except ErrorAPI as e:
+        respuesta = _sesion_expirada(request, e)
+        if respuesta:
+            return respuesta
+        messages.error(request, e.mensaje)
+        pedidos = []
+    return render(request, "tienda/admin_pedidos.html", {
+        "pedidos": pedidos,
+        "estados": ESTADOS_PEDIDO,
+    })
+
+
+@admin_requerido
+@require_POST
+def admin_pedido_estado(request, pedido_id):
+    estado = request.POST.get("estado", "")
+    if estado not in ESTADOS_PEDIDO:
+        messages.error(request, "Estado no válido.")
+        return redirect("admin_pedidos")
+    try:
+        servicios.cambiar_estado_pedido(request.session["token"], pedido_id, estado)
+    except ErrorAPI as e:
+        respuesta = _sesion_expirada(request, e)
+        if respuesta:
+            return respuesta
+        messages.error(request, e.mensaje)
+    else:
+        messages.success(request, f"Pedido marcado como '{estado}'.")
+    return redirect("admin_pedidos")

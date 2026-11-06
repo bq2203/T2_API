@@ -1,0 +1,105 @@
+{% extends "tienda/base.html" %}
+{% block titulo %}{{ producto.nombre }} · TechGear{% endblock %}
+{% block contenido %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'catalogo' %}">Catálogo</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre }}</li>
+  </ol>
+</nav>
+
+<div class="row g-4">
+  <div class="col-12 col-md-5">
+    <div class="ratio ratio-1x1 bg-body-secondary rounded shadow-sm overflow-hidden">
+      {% if producto.imagen %}
+        <img src="{{ producto.imagen }}" alt="{{ producto.nombre }}" class="object-fit-cover">
+      {% else %}
+        <div class="d-flex align-items-center justify-content-center text-body-secondary">Sin foto</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-12 col-md-7">
+    <span class="badge text-bg-primary mb-2">{{ producto.categoria }}</span>
+    <h1 class="h2">{{ producto.nombre }}</h1>
+    <p class="text-body-secondary">{{ producto.descripcion|default:"Sin descripción." }}</p>
+    <p class="display-6 fw-bold mb-1">${{ producto.precio|floatformat:2 }}</p>
+    {% if producto.stock > 0 %}
+      <p><span class="badge text-bg-success">{{ producto.stock }} disponibles</span></p>
+    {% else %}
+      <p><span class="badge text-bg-danger">Agotado</span></p>
+    {% endif %}
+
+    {% if producto.stock > 0 %}
+      {% if request.session.token %}
+        <div class="card shadow-sm mt-3">
+          <div class="card-body">
+            <h2 class="h5 mb-3">Datos del pedido</h2>
+            <form method="post" action="{% url 'comprar' producto.id %}" id="form-compra">
+              {% csrf_token %}
+              <div class="row g-3">
+                <div class="col-6 col-md-4">
+                  <label for="cantidad" class="form-label">Cantidad</label>
+                  <input type="number" name="cantidad" id="cantidad" class="form-control"
+                         min="1" max="{{ producto.stock }}" value="{{ form.cantidad|default:1 }}"
+                         data-precio="{{ producto.precio|stringformat:'f' }}" required>
+                </div>
+                <div class="col-6 col-md-8 d-flex align-items-end">
+                  <span class="fs-5">Total: <strong id="total">${{ producto.precio|floatformat:2 }}</strong></span>
+                </div>
+                <div class="col-12 col-md-8">
+                  <label for="direccion" class="form-label">Dirección de envío</label>
+                  <input type="text" name="direccion" id="direccion" class="form-control"
+                         minlength="5" value="{{ form.direccion }}" required>
+                </div>
+                <div class="col-12 col-md-4">
+                  <label for="ciudad" class="form-label">Ciudad</label>
+                  <input type="text" name="ciudad" id="ciudad" class="form-control"
+                         value="{{ form.ciudad }}" required>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label for="telefono" class="form-label">Teléfono</label>
+                  <input type="tel" name="telefono" id="telefono" class="form-control"
+                         pattern="[0-9 +()-]{7,20}" value="{{ form.telefono }}" required>
+                </div>
+                <div class="col-12">
+                  <label for="observaciones" class="form-label">Observaciones (opcional)</label>
+                  <textarea name="observaciones" id="observaciones" rows="2"
+                            class="form-control">{{ form.observaciones }}</textarea>
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary btn-lg w-100">Comprar</button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <div class="alert alert-info mt-3">
+          Para comprar necesitas una cuenta.
+          <a href="{% url 'login' %}" class="alert-link">Inicia sesión</a> o
+          <a href="{% url 'registro' %}" class="alert-link">regístrate</a>.
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // Total en vivo según la cantidad
+  const cant = document.getElementById("cantidad");
+  const total = document.getElementById("total");
+  if (cant && total) {
+    const precio = parseFloat(cant.dataset.precio);
+    const actualizar = () => {
+      const n = Math.max(1, parseInt(cant.value) || 1);
+      total.textContent = "$" + (precio * n).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    };
+    cant.addEventListener("input", actualizar);
+    actualizar(); // calcula también al cargar (por si el formulario vuelve con una cantidad)
+  }
+</script>
+{% endblock %}

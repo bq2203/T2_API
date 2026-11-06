@@ -10,6 +10,7 @@ from pymongo.errors import DuplicateKeyError
 
 from db.database import pedidos_collection, productos_collection, usuarios_collection
 from models.models import (
+    EstadoPedido,
     PedidoCreate,
     PedidoOut,
     ProductoCreate,
@@ -129,6 +130,12 @@ def eliminar_producto(producto_id: str, _: dict = Depends(solo_admin)):
     return {"mensaje": "Producto eliminado"}
 
 
+# =====================================================================
+# techgear_api/main.py  ->  REEMPLAZA solo la sección "# ---------- Pedidos ----------"
+# (desde @app.post("/pedidos") hasta el final de listar_pedidos).
+# También agrega a los imports de models.py: nada nuevo (PedidoCreate y PedidoOut ya están).
+# =====================================================================
+
 # ---------- Pedidos ----------
 @app.post(
     "/pedidos",
@@ -136,38 +143,92 @@ def eliminar_producto(producto_id: str, _: dict = Depends(solo_admin)):
     status_code=status.HTTP_201_CREATED,
     tags=["Pedidos"],
 )
-def registrar_pedido(pedido: PedidoCreate):
+def registrar_pedido(pedido: PedidoCreate, usuario: dict = Depends(usuario_actual)):
     total = 0.0
-    actualizaciones = []
+    items_guardar = []
+    reservados = []  # (oid, cantidad) ya descontados, para revertir si algo falla
+
     for item in pedido.items:
         producto = productos_collection.find_one({"_id": to_oid(item.producto_id)})
         if not producto:
+            _revertir_stock(reservados)
             raise HTTPException(
                 status.HTTP_404_NOT_FOUND, f"Producto {item.producto_id} no existe"
             )
-        if producto["stock"] < item.cantidad:
+        res = productos_collection.update_one(
+            {"_id": producto["_id"], "stock": {"$gte": item.cantidad}},
+            {"$inc": {"stock": -item.cantidad}},
+        )
+        if res.modified_count == 0:
+            _revertir_stock(reservados)
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
                 f"Stock insuficiente para '{producto['nombre']}'",
             )
+        reservados.append((producto["_id"], item.cantidad))
         total += producto["precio"] * item.cantidad
-        actualizaciones.append((producto["_id"], item.cantidad))
+        items_guardar.append({
+            "producto_id": item.producto_id,
+            "cantidad": item.cantidad,
+            "nombre": producto["nombre"],
+            "precio_unitario": producto["precio"],
+        })
 
-    for oid, cantidad in actualizaciones:
-        productos_collection.update_one({"_id": oid}, {"$inc": {"stock": -cantidad}})
-
-    data = pedido.model_dump()
-    data["total"] = round(total, 2)
-    data["estado"] = "pendiente"
-    data["fecha"] = datetime.now()
+    data = {
+        "usuario_id": str(usuario["_id"]),
+        "cliente": usuario["nombre"],
+        "items": items_guardar,
+        "envio": pedido.envio.model_dump(),
+        "total": round(total, 2),
+        "estado": "pendiente",
+        "fecha": datetime.now(),
+    }
     res = pedidos_collection.insert_one(data)
     return serializar(pedidos_collection.find_one({"_id": res.inserted_id}))
 
 
-@app.get("/pedidos", response_model=List[PedidoOut], tags=["Pedidos"])
-def listar_pedidos():
-    return [serializar(p) for p in pedidos_collection.find()]
+def _revertir_stock(reservados):
+    for oid, cantidad in reservados:
+        productos_collection.update_one({"_id": oid}, {"$inc": {"stock": cantidad}})
 
+
+@app.get("/pedidos/mios", response_model=List[PedidoOut], tags=["Pedidos"])
+def mis_pedidos(usuario: dict = Depends(usuario_actual)):
+    docs = pedidos_collection.find({"usuario_id": str(usuario["_id"])}).sort("fecha", -1)
+    return [serializar(p) for p in docs]
+
+
+
+@app.get("/pedidos", response_model=List[PedidoOut], tags=["Pedidos"])
+def listar_pedidos(_: dict = Depends(solo_admin)):
+    return [serializar(p) for p in pedidos_collection.find().sort("fecha", -1)]
+
+
+@app.put("/pedidos/{pedido_id}/estado", response_model=PedidoOut, tags=["Pedidos"])
+def cambiar_estado_pedido(
+    pedido_id: str, datos: EstadoPedido, _: dict = Depends(solo_admin)
+):
+    pedido = pedidos_collection.find_one({"_id": to_oid(pedido_id)})
+    if not pedido:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Pedido no encontrado")
+
+    anterior = pedido.get("estado")
+    if anterior == "cancelado":
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Un pedido cancelado no se puede modificar"
+        )
+
+    # Al cancelar, el stock vuelve al producto
+    if datos.estado == "cancelado":
+        for it in pedido.get("items", []):
+            productos_collection.update_one(
+                {"_id": to_oid(it["producto_id"])}, {"$inc": {"stock": it["cantidad"]}}
+            )
+
+    pedidos_collection.update_one(
+        {"_id": pedido["_id"]}, {"$set": {"estado": datos.estado}}
+    )
+    return serializar(pedidos_collection.find_one({"_id": pedido["_id"]}))
 
 # ---------- Usuarios (registro, login con JWT, perfil) ----------
 @app.post(
