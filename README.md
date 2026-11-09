@@ -223,6 +223,7 @@ Agrega también las demás variables que lee `db/database.py` y `seguridad.py` (
 - ⚡ **API (Render):** [https://t2-api-1.onrender.com](https://t2-api-1.onrender.com)
 - 📚 **Documentación:** [https://t2-api-1.onrender.com/docs](https://t2-api-1.onrender.com/docs)
 - 💻 **Repositorio:** [https://github.com/bq2203/T2_API](https://github.com/bq2203/T2_API)
+- **Vercel** [t2-q6brn3t4g-bq2203.vercel.app](t2-q6brn3t4g-bq2203.vercel.app)
 
 > ⚠️ El plan gratuito de Render duerme la API tras un rato sin uso; la primera petición puede tardar cerca de un minuto en responder.
 
