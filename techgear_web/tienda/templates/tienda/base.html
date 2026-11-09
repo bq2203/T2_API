@@ -106,7 +106,7 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-  {% with u=request.resolver_match.url_name %}
+  {% with u=request.resolver_match.url_name|default:'' %}
   <nav class="navbar navbar-expand-lg tg-navbar sticky-top" data-bs-theme="dark">
     <div class="container">
       <a class="navbar-brand d-flex align-items-center gap-2 fw-bold fs-5 tg-display" href="{% url 'catalogo' %}">
@@ -128,7 +128,7 @@
           </li>
 
           {% if request.session.token %}
-            {% if request.session.usuario.rol == "admin" %}
+            {% if request.session.usuario.rol|default:"" == "admin" %}
               <li class="nav-item">
                 <a class="nav-link {% if u == 'dashboard' or u == 'producto_crear' or u == 'producto_editar' %}active{% endif %}" href="{% url 'dashboard' %}">
                   <i class="bi bi-speedometer2 me-1"></i>Dashboard
@@ -150,8 +150,8 @@
             <li class="nav-item dropdown ms-lg-2">
               <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button"
                  data-bs-toggle="dropdown" aria-expanded="false">
-                <span class="tg-avatar tg-avatar-sm">{{ request.session.usuario.nombre|slice:":1"|upper }}</span>
-                <span>{{ request.session.usuario.nombre }}</span>
+                <span class="tg-avatar tg-avatar-sm">{{ request.session.usuario.nombre|default:'U'|slice:":1"|upper }}</span>
+                <span>{{ request.session.usuario.nombre|default:'Usuario' }}</span>
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><h6 class="dropdown-header">{{ request.session.usuario.email }}</h6></li>
